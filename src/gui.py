@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.widgets import Button
 import tkinter as tk
+from .polygon_triangulation import *
 
 class GUI(object):
     """Implements functions for interacting with motion planning codebase through GUI environment."""
@@ -49,8 +50,34 @@ class GUI(object):
         print(s)
         plt.title(s, fontsize=16)
 
-    def on_alg_run(self):
-        pass
+    def draw_split(self, point):
+        print("merge")
+        point_0 = (point[0], point[1] + 5)
+        point_1 = (point[0] - 5, point[1] - 5)
+        point_2 = (point[0] + 5, point[1] - 5)
+        self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan")
+
+    def draw_merge(self, point):
+        print("split")
+        point_0 = (point[0], point[1] - 5)
+        point_1 = (point[0] - 5, point[1] + 5)
+        point_2 = (point[0] + 5, point[1] + 5)
+        self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan")
+
+    def on_triangulation_run(self):
+        # Show per-vertex labels for the monotone partitioning
+        print("running_triangulation: len obstacles: {}".format(len(self.obstacle_polygons)))
+        for polygon in self.obstacle_polygons:
+            labels = compute_vertex_labels(polygon)
+            for idx, label in enumerate(labels):
+                if label == "merge":
+                    self.draw_merge(polygon[idx])
+                elif label == "split":
+                    self.draw_split(polygon[idx])
+
+        # Show monotone pieces
+
+        # Show final Triangulation
 
     def left_mouse_callback(self, event):  
         point_list = None
