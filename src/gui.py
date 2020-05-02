@@ -4,6 +4,7 @@ import numpy as np
 from matplotlib.widgets import Button
 import tkinter as tk
 from .polygon_triangulation import *
+from .c_space import *
 
 class GUI(object):
     """Implements functions for interacting with motion planning codebase through GUI environment."""
@@ -44,6 +45,8 @@ class GUI(object):
         start_triangulation = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Run Triangulation", command=self.on_triangulation_run)
         start_triangulation.pack(side=tk.TOP)
 
+        start_cspace = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Compute C-Space", command=self.on_compute_cspace)
+        start_cspace.pack(side=tk.TOP)
         self.window.mainloop()
 
     def show_instruction(s):
@@ -51,14 +54,12 @@ class GUI(object):
         plt.title(s, fontsize=16)
 
     def draw_split(self, point):
-        print("merge")
         point_0 = (point[0], point[1] + 5)
         point_1 = (point[0] - 5, point[1] - 5)
         point_2 = (point[0] + 5, point[1] - 5)
         self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan")
 
     def draw_merge(self, point):
-        print("split")
         point_0 = (point[0], point[1] - 5)
         point_1 = (point[0] - 5, point[1] + 5)
         point_2 = (point[0] + 5, point[1] + 5)
@@ -78,6 +79,12 @@ class GUI(object):
         # Show monotone pieces
 
         # Show final Triangulation
+    
+    def on_compute_cspace(self):
+        expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
+        for polygon in expanded_polygons:
+            self.canvas.create_polygon(*list(polygon.astype(int).flatten()))
+
 
     def left_mouse_callback(self, event):  
         point_list = None
@@ -106,6 +113,8 @@ class GUI(object):
                 self.last_polygon = []
             else:
                 self.canvas.create_polygon(*list(point_list.flatten()), fill="red")
+                self.building_vehicle = False
+                self.vehicle_polygon = np.array(self.vehicle_polygon)
 
     
     def on_obstacle_start_click(self):
@@ -116,6 +125,7 @@ class GUI(object):
         # Reset vehicle polygon
         self.building_polygon = False
         self.building_vehicle = not self.building_vehicle
+        self.vehicle_polygon = []
 
     def run(self):
         pass
