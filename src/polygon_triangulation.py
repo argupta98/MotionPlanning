@@ -55,8 +55,6 @@ def partition_monotone(polygon, labels):
         if label == "split":
             # Add a diagonal to the edge helper
             pass
-        
-
 
 
 def compute_vertex_labels(polygon):

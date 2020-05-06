@@ -84,6 +84,13 @@ class GUI(object):
         expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
         for polygon in expanded_polygons:
             self.canvas.create_polygon(*list(polygon.astype(int).flatten()))
+        decomposition_lines = trapezoid_decomposition_linear(expanded_polygons)
+
+        for x in decomposition_lines.keys():
+            og_y, top, bottom = decomposition_lines[x]
+            top = min(top, 800)
+            self.canvas.create_line(x, top, x, bottom)
+
 
 
     def left_mouse_callback(self, event):  
