@@ -245,11 +245,13 @@ class PointQuery(Query):
         return self.false_child
 
 def linear_interpolation(edge, x):
-    m = (edge[0][1] - edge[1][1]) / (edge[0][0] - edge[1][0])
-    if m > 0:
-        b = edge[0][1] / m - edge[0][0]
+    m = float(edge[0][1] - edge[1][1]) / float(edge[0][0] - edge[1][0])
+    print("m: {}".format(m))
+    if m != 0:
+        b = edge[0][1] - m * edge[0][0]
         return m * x + b
     else:
+        assert(edge[0][1] == edge[1][1])
         return edge[0][1]
 
 def make_lr(edge):

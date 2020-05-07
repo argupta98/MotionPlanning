@@ -113,7 +113,7 @@ class GUI(object):
             print("len lines: {}".format(len(lines)))
             for line in lines:
                 self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
-            if i == 1:
+            if i == 0:
                 break
             #time.sleep(5)
             self.canvas.delete("trapezoid_line")
