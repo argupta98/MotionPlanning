@@ -57,13 +57,13 @@ class GUI(object):
         point_0 = (point[0], point[1] + 5)
         point_1 = (point[0] - 5, point[1] - 5)
         point_2 = (point[0] + 5, point[1] - 5)
-        self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan")
+        self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan", tag="ms")
 
     def draw_merge(self, point):
         point_0 = (point[0], point[1] - 5)
         point_1 = (point[0] - 5, point[1] + 5)
         point_2 = (point[0] + 5, point[1] + 5)
-        self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan")
+        self.canvas.create_polygon(point_0[0], point_0[1], point_1[0], point_1[1], point_2[0], point_2[1], fill="cyan", tag="ms")
 
     def on_triangulation_run(self):
         # Show per-vertex labels for the monotone partitioning
@@ -83,15 +83,13 @@ class GUI(object):
     def on_compute_cspace(self):
         expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
         for polygon in expanded_polygons:
-            self.canvas.create_polygon(*list(polygon.astype(int).flatten()))
+            self.canvas.create_polygon(*list(polygon.astype(int).flatten()), tag="expanded_p")
         decomposition_lines = trapezoid_decomposition_linear(expanded_polygons)
 
         for x in decomposition_lines.keys():
             og_y, top, bottom = decomposition_lines[x]
             top = min(top, 800)
-            self.canvas.create_line(x, top, x, bottom)
-
-
+            self.canvas.create_line(x, top, x, bottom, tag="trapezoid_line")
 
     def left_mouse_callback(self, event):  
         point_list = None
@@ -110,18 +108,19 @@ class GUI(object):
         if len(point_list) > 1:
             x_last = point_list[-2][0]
             y_last = point_list[-2][1]
-            self.canvas.create_line(x_last, y_last, x, y)
+            self.canvas.create_line(x_last, y_last, x, y, tag="polygon_lines")
 
         if np.linalg.norm(point_list[0] - point_list[-1]) < 15 and len(point_list) > 3:
             point_list = np.array(point_list[:-1])
             if self.building_polygon:
-                self.canvas.create_polygon(*list(point_list.flatten()))
+                self.canvas.create_polygon(*list(point_list.flatten()), tag="obstacle")
                 self.obstacle_polygons.append(point_list)
                 self.last_polygon = []
             else:
                 self.canvas.create_polygon(*list(point_list.flatten()), fill="red")
                 self.building_vehicle = False
-                self.vehicle_polygon = np.array(self.vehicle_polygon)
+                self.vehicle_polygon = np.array(self.vehicle_polygon, tag="vehicle")
+            self.canvas.delete("polygon_lines")
 
     
     def on_obstacle_start_click(self):

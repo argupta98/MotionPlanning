@@ -21,31 +21,6 @@ def compute_cspace(obstacle_polygons, vehicle_polygon):
     # TODO: Compute Trapezoid Decomposition
     return enlarged_obstacles
 
-"""
-def trapezoid_decomposition(polygons):
-    all_points = np.concatenate(polygons, axis=0)
-    polygon_lengths = np.array([len(polygon) for polygon in polygons])
-    polygon_starts = np.cumsum(polygon_lengths)
-
-    # Line sweep
-    sorted_indices = np.argsort(all_points[:, 0])
-
-    edges = SortedDict()
-    for idx in sorted_indices:
-        # Make a vertical line
-        x_coord = all_points[idx]
-
-        # Find the closest edges to the top and bottom via binary search on last_edges
-        search_tree_len = len(edges)
-        top_point = None
-        bottom_point = None
-        if len(edges) > 0:
-            start_idx = search_tree_len // 2
-            # Binary Search
-            while True:
-                line_func = edges[start_idx]
-"""
-
 def trapezoid_decomposition_linear(polygons):
     """
     Keep track of which lines to add to GUI, keep track of the point_vertices.
@@ -77,8 +52,20 @@ def trapezoid_decomposition_linear(polygons):
                     vertical_lines[x][2] = y_val
             start_vertex = vertex
     return vertical_lines
+
+
+def trapezoid_decomposition_pl(polygons):
+    """ Runs polygon decomposition while maintaining the 
+        point location datastructure for O(nlogn) runtime."""
+    pass
             
 
+def freespace_graph(trapezoids):
+    """
+    Computes a Graph of rechable freespace nodes from 
+    a set of trapezoids.
+    """
+    pass
 
 def linear_interpolation(p_1, p_2, x):
     slope = (p_1[1] - p_2[1]) / (p_1[0] - p_2[0])
