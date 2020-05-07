@@ -1,6 +1,7 @@
 """Contains the classes for working with the polygons and the trapezoids in a coherent way."""
 
 import numpy as np
+import random
 
 class Polygons(object):
     """ A class to hold several polygons and implements useful polygon operations."""
@@ -22,7 +23,17 @@ class Polygons(object):
 
     def random_edge_sampler(self):
         """Returns an iterator that randomly samples edges without replacement."""
-        pass
+        # Make edges
+        edges = []
+        for polygon in self.polygons:
+            for i in range(len(polygon)):
+                edges.append(np.array([polygon[i], polygon[(i + 1) % len(polygon)]]))
+        
+        # Get a random shuffling of edge indices
+        indices = [i for i in range(len(edges))]
+        random.shuffle(indices)
+        for i in indices:
+            yield edges[i]
         
     def __getitem__(self, idx):
         return self.polygons[idx]

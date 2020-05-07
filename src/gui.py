@@ -5,6 +5,7 @@ from matplotlib.widgets import Button
 import tkinter as tk
 from .polygon_triangulation import *
 from .c_space import *
+import time
 
 class GUI(object):
     """Implements functions for interacting with motion planning codebase through GUI environment."""
@@ -47,6 +48,12 @@ class GUI(object):
 
         start_cspace = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Compute C-Space", command=self.on_compute_cspace)
         start_cspace.pack(side=tk.TOP)
+
+        trap_decomp = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Trap Decomposition", command=self.on_run_trap_decomposition)
+        trap_decomp.pack(side=tk.TOP)
+
+        clear_polygons = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Clear Polygons", command=self.clear_polygons)
+        clear_polygons.pack(side=tk.TOP)
         self.window.mainloop()
 
     def show_instruction(s):
@@ -79,7 +86,10 @@ class GUI(object):
         # Show monotone pieces
 
         # Show final Triangulation
-    
+
+    def clear_polygons(self):
+        self.canvas.delete("obstacle")
+
     def on_compute_cspace(self):
         expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
         for polygon in expanded_polygons:
@@ -90,6 +100,22 @@ class GUI(object):
             og_y, top, bottom = decomposition_lines[x]
             top = min(top, 800)
             self.canvas.create_line(x, top, x, bottom, tag="trapezoid_line")
+    
+    def on_run_trap_decomposition(self):
+        polygons = Polygons(self.obstacle_polygons)
+        bounds = [10, 10, 790, 790]
+        point_locator = PointLocator(bounds)
+        # self.canvas.delete("all")
+        for i, edge in enumerate(polygons.random_edge_sampler()):
+            print("iteration: {}".format(i))
+            point_locator.add_line(edge)
+            lines = point_locator.lines()
+            print("len lines: {}".format(len(lines)))
+            for line in lines:
+                self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
+            break
+            #time.sleep(5)
+            self.canvas.delete("trapezoid_line")
 
     def left_mouse_callback(self, event):  
         point_list = None

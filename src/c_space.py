@@ -2,6 +2,8 @@
 from scipy.spatial import ConvexHull
 import numpy as np
 from sortedcontainers import SortedDict, SortedList
+from .structures import Polygons
+from .point_location import PointLocator
 
 def compute_cspace(obstacle_polygons, vehicle_polygon):
     """ Computes the configuration space of a set of polygons
@@ -54,11 +56,14 @@ def trapezoid_decomposition_linear(polygons):
     return vertical_lines
 
 
-def trapezoid_decomposition_pl(polygons):
+def trapezoid_decomposition_pl(polygons, bounds):
     """ Runs polygon decomposition while maintaining the 
         point location datastructure for O(nlogn) runtime."""
-    pass
-            
+    polygons = Polygons(polygons)
+    point_locator = PointLocator(bounds)
+    for edge in polygons.random_edge_sampler():
+        point_locator.add_line(edge)
+
 
 def freespace_graph(trapezoids):
     """
