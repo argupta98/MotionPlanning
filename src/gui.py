@@ -49,8 +49,11 @@ class GUI(object):
         start_cspace = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Compute C-Space", command=self.on_compute_cspace)
         start_cspace.pack(side=tk.TOP)
 
-        trap_decomp = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Trap Decomposition", command=self.on_run_trap_decomposition)
+        trap_decomp = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Start Decomposition", command=self.on_start_trap_decomposition)
         trap_decomp.pack(side=tk.TOP)
+
+        trap_step = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Decomposition Step", command=self.on_trap_step)
+        trap_step.pack(side=tk.TOP)
 
         clear_polygons = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Clear Polygons", command=self.clear_polygons)
         clear_polygons.pack(side=tk.TOP)
@@ -101,22 +104,23 @@ class GUI(object):
             top = min(top, 800)
             self.canvas.create_line(x, top, x, bottom, tag="trapezoid_line")
     
-    def on_run_trap_decomposition(self):
-        polygons = Polygons(self.obstacle_polygons)
+    def on_start_trap_decomposition(self):
+        self.polygons = Polygons(self.obstacle_polygons)
         bounds = [10, 10, 790, 790]
-        point_locator = PointLocator(bounds)
+        self.point_locator = PointLocator(bounds)
+        self.random_edge_sampler = self.polygons.random_edge_sampler()
+        self.decomp_idx = 0
+    
+    def on_trap_step(self):
         # self.canvas.delete("all")
-        for i, edge in enumerate(polygons.random_edge_sampler()):
-            print("iteration: {}".format(i))
-            point_locator.add_line(edge)
-            lines = point_locator.lines()
-            print("len lines: {}".format(len(lines)))
-            for line in lines:
-                self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
-            if i == 0:
-                break
-            #time.sleep(5)
-            self.canvas.delete("trapezoid_line")
+        # self.canvas.delete("trapezoid_line")
+        edge = self.random_edge_sampler.next()
+        print("\n\n ------ iteration: {} -----".format(self.decomp_idx))
+        self.point_locator.add_line(edge)
+        lines = self.point_locator.lines()
+        for line in lines:
+            self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
+        self.decomp_idx += 1
 
     def left_mouse_callback(self, event):  
         point_list = None
