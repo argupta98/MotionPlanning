@@ -10,23 +10,51 @@ class Trapezoid(object):
         self.vertices = vertices
         # find two topmost point
         y_sorted = np.argsort(self.vertices[:, 1])
-        self.top_line = make_lr(self.vertices[y_sorted[2:]])
-        self.bottom_line = make_lr(self.vertices[y_sorted[:2]])
+        idx = 2
+        if len(vertices) == 3:
+            idx = 1
+        self.top_line = self.set_line(top=True)
+        self.bottom_line = self.set_line(top=False)
         self.left_p = self.vertices[np.argmin(self.vertices[:, 0])]
         self.right_p = self.vertices[np.argmax(self.vertices[:, 0])]
         assert(self.left_p[0] < self.right_p[0]), "left p: {} right_p: {}  all points: {}".format(self.left_p, self.right_p, self.vertices)
         self.parent = parent
-        self.originators = originator_vertices
+
+        # Can have at most 2 originators
+        assert(len(originator_vertices) <= 2)
+        self.originators = []
+        if len(originator_vertices) > 0:
+            self.originators = make_lr(np.array(originator_vertices))
         self.index = 0 
 
     def __repr__(self):
-        return "Trapezoid: {}".format(self.index)
+        return "Trapezoid: {} - {}".format(self.index, self.vertices)
 
     def set_idx(self, i):
         self.index = i
     
     def set_parent(self, parent):
         self.parent = parent
+
+    def set_line(self, top=True):
+        """ Processes vertices to get the correct top line. """
+        y_sorted = np.argsort(self.vertices[:, 1])
+        idx = 0
+        if top:
+            idx = -1
+        start = self.vertices[y_sorted[idx]]
+        left_idx = (y_sorted[idx] - 1) % len(self.vertices)
+        right_idx = (y_sorted[idx] + 1) % len(self.vertices)
+        contenders = np.array([self.vertices[left_idx], self.vertices[right_idx]])
+        diffs = contenders - start
+        if (diffs[:, 0] == 0).any():
+            end = contenders[np.argwhere(diffs[:, 0] != 0)[0, 0]]
+        else:
+            if top:
+                end = contenders[np.argmax(contenders[:, 1])]
+            else:
+                end = contenders[np.argmin(contenders[:, 1])]
+        return make_lr(np.array([start, end]))
 
     def top(self):
         """Returns the top-most segment of the trapezoid."""
@@ -48,29 +76,59 @@ class Trapezoid(object):
         """ Returns whether an edge intersects the trapezoid."""
         assert(edge[0, 0] < edge[1, 0])
         # Cannot have an intersection
-        # Check edge below the top line
+        # Check edge below the top line (left side)
         if edge[0, 0] < self.top_line[0, 0]:
-            criteria_top = linear_interpolation(edge, self.top_line[0, 0]) <= self.top_line[0, 1]
-            criteria_bottom = linear_interpolation(edge, self.bottom_line[0, 0]) >= self.bottom_line[0, 1]
+            criteria_top_left = linear_interpolation(edge, self.top_line[0, 0]) <= self.top_line[0, 1] + 10**-6
+            criteria_bottom_left = linear_interpolation(edge, self.bottom_line[0, 0]) >= self.bottom_line[0, 1] - 10 **-6
 
         else: 
-            criteria_top = edge[0, 1] <= linear_interpolation(self.top_line, edge[0, 0])
-            criteria_bottom = edge[0, 1] >= linear_interpolation(self.bottom_line, edge[0, 0])
+            criteria_top_left = edge[0, 1] <= linear_interpolation(self.top_line, edge[0, 0]) + 10**-6
+            criteria_bottom_left = edge[0, 1] >= linear_interpolation(self.bottom_line, edge[0, 0]) - 10**-6
 
-        if not criteria_top:
-            print("[Trapezoid {}] top hight criteria not met".format(self.index))
+        if not criteria_top_left:
+            print("\n[Trapezoid {}] top hight left criteria not met\n Edge: {} \nVertices: {}\n------------\n".format(self.index, edge, self.vertices))
             return False
         
-        if not criteria_bottom:
-            print("[Trapezoid {}] bottom hight criteria not met".format(self.index))
+        if not criteria_bottom_left:
+            print("\n[Trapezoid {}] bottom hight left criteria not met\n Edge: {} \nVertices: {}\n------------\n".format(self.index, edge, self.vertices))
+            return False
+
+        # check below top line (right side)
+        if edge[1, 0] > self.top_line[1, 0]:
+            criteria_top_right = linear_interpolation(edge, self.top_line[1, 0]) <= self.top_line[1, 1] + 10**-6
+            criteria_bottom_right = linear_interpolation(edge, self.bottom_line[1, 0]) >= self.bottom_line[1, 1] - 10**-6
+
+        else: 
+            criteria_top_right = edge[1, 1] <= linear_interpolation(self.top_line, edge[1, 0]) + 10**-6
+            criteria_bottom_right = edge[1, 1] >= linear_interpolation(self.bottom_line, edge[1, 0]) - 10**-6
+            # print("edge[1, 1]: {} >= linear_interpolation: {}: {}".format(edge[1, 1], linear_interpolation(self.bottom_line, edge[1, 0]), criteria_bottom_right))
+
+        if not criteria_top_right:
+            print("\n[Trapezoid {}] top hight right criteria not met\n Edge: {} \nVertices: {}\n------------\n".format(self.index, edge, self.vertices))
+            return False
+        
+        if not criteria_bottom_right:
+            print("\n[Trapezoid {}] bottom hight right criteria not met\n Edge: {} \nVertices: {}\n------------\n".format(self.index, edge, self.vertices))
             return False
         
         if edge[1][0] <= self.left_p[0]:
-            print("[Trapezoid {}] edge <= left_pt".format(self.index))
+            print("\n[Trapezoid {}] edge right x < left_p \n Edge: {} \nVertices: {}\n------------\n".format(self.index, edge, self.vertices))
             return False
         
         if edge[0][0] >= self.right_p[0]:
-            print("[Trapezoid {}] edge >= right_pt".format(self.index))
+            print("\n[Trapezoid {}] edge left x > right_p\n Edge: {} \nVertices: {}\n------------\n".format(self.index, edge, self.vertices))
+            return False
+        return True
+
+    def includes_point_loose(self, point):
+        """Returns if the point is inside the trapezoid."""
+        if point[0] < self.left_p[0] or point[0] > self.right_p[0]:
+            return False
+
+        y_upper = linear_interpolation(self.top_line, point[0])
+        y_lower = linear_interpolation(self.bottom_line, point[0])
+
+        if point[1] < y_lower - 10**-6 or point[1] > y_upper + 10**-6:
             return False
         return True
 
@@ -95,8 +153,11 @@ class Trapezoid(object):
             `left`:
             `right`:
             `bottom`:
+            `merge left`:
+            `merge right`:
         """
         new_traps = {}
+        merge = {}
         curr_trap = self
 
         if curr_trap.is_intersected(edge):
@@ -123,6 +184,8 @@ class Trapezoid(object):
                         leftover_points.append(curr_trap.top_line[1 - i])
 
                     leftover_points = np.array(center_points + leftover_points)
+
+                    # Update which things originated the appropriate lines
                     new_originators = []
                     leftover_originators = []
                     for originator in curr_trap.originators:
@@ -144,7 +207,6 @@ class Trapezoid(object):
             # assert(curr_trap.is_intersected(edge))
 
             # Split the remaining trapezoid area into top and bottom
-            # TODO Shorten the appropriate extensions and merge appropriate trapezoids
 
             # Center line for split
             center_left = [curr_trap.left_p[0], linear_interpolation(edge, curr_trap.left_p[0])]
@@ -167,6 +229,10 @@ class Trapezoid(object):
             new_traps["top"] = Trapezoid(top_points, top_originators)
             new_traps["bottom"] = Trapezoid(bottom_points, bottom_originators)
 
+            # Shorten the appropriate extensions and merge appropriate trapezoids
+            # for originator in curr_trap.originators:
+            #    top_originator_points = np.argwhere(top_points[:, 0] == originator[0])[:, 0]
+            #    if originator[1] < 
         return new_traps
 
 
@@ -190,25 +256,32 @@ class Trapezoids(object):
         return traps
 
     def right_adjacent(self, index):
+        """Returns all trapezoids that share the right edge with the current 
+        one.
+        """
         trap = self.trapezoids[index]
+        print("[Right-Adjacent] rightp: {}".format(trap.rightp()[0]))
         if trap.rightp()[0] in self.by_left_x:
             choices = self.by_left_x[trap.rightp()[0]]
         else:
+            print("[Right-Adjacent] rightp not in by_left_x")
             return []
-        # First line under the top line
-        idx = choices.bisect_left(trap.top()[1, 1])
+        # First bottom line below the top line
+        idx = choices.bisect_left(trap.top()[1, 1]) - 1
         keys = choices.keys()
-        if idx < len(keys) and idx >= 0:
+        print("[Right-Adjacent] idx: {}".format(idx))
+        print("[Right-Adjacent] keys: {}".format(keys))
+        if idx >= 0:
             curr_trap = choices[keys[idx]]
         else:
+            print("[Right-Adjacent] idx < 0")
             return []
 
-        print("right adjacent keys: {}".format(keys))
         right_adjacent = []
         while trap.top()[1, 1] > curr_trap.bottom()[0, 1]:
             if trap.bottom()[1, 1] < curr_trap.top()[0, 1]:
                 right_adjacent.append(curr_trap.index)
-
+            
             idx -= 1
             if idx >= 0:
                 curr_trap = choices[keys[idx]]
@@ -223,7 +296,7 @@ class Trapezoids(object):
         trap = self.trapezoids[idx]
         self.trapezoids[idx] = None
         self.to_remove.append(idx)
-        self.by_left_x[trap.leftp()[0]].pop(trap.top()[0, 1])
+        self.by_left_x[trap.leftp()[0]].pop(trap.bottom()[0, 1])
 
     def clean(self):
         # TODO: Reset indices in the trapezoids
@@ -236,18 +309,87 @@ class Trapezoids(object):
         self.trapezoids.append(trapezoid)
 
         if trapezoid.leftp()[0] not in self.by_left_x:
+            print("[Add] leftp {} not in leftx: {}".format(trapezoid.leftp()[0], self.by_left_x.keys()))
             self.by_left_x[trapezoid.leftp()[0]] = SortedDict()
-        self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.top()[0, 1], trapezoid)])
+        print("[Add] New leftp {}".format(trapezoid.leftp()[0]))
+        self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
         # if trapezoid.rightp()[0] not in self.by_right_x:
         #     self.by_right_x[trapezoid.rightp()[0]] = SortedDict()
         #self.by_right_x[trapezoid.rightp()[0]].update((trapezoid.top()[1, 1], trapezoid))
         trapezoid.set_idx(len(self.trapezoids) - 1)
         return trapezoid.index
+    
+    def update_idx(self, idx, trapezoid):
+        old_trap = self.trapezoids[idx] 
+        self.by_left_x[old_trap.leftp()[0]].pop(old_trap.bottom()[0, 1])
+        self.trapezoids[idx] = trapezoid
+        trapezoid.set_idx(idx)
+        if trapezoid.leftp()[0] not in self.by_left_x:
+            self.by_left_x[trapezoid.leftp()[0]] = SortedDict()
+        self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.bottom()[0, 1], trapezoid)])
+
         
     def to_graph(self):
         """Turns the trapezoids into a searchable graph."""
         pass
+
+    def remove_traps_within_polygons(self, polygons):
+        """ Removes trapezoids that lie within a polygon in polygons. """
+
+        for polygon in polygons:
+            for point in polygon:
+                potential_traps = self.by_left_x[point[0]]
+                for trap in potential_traps:
+                    if polygon.contains(trap.raw()):
+                        self.pop(trap.index)
+    
+    def split_trapezoids(self, edge, indices):
+        new_trapezoids = []
+        for trap_idx in indices:
+            trap = self.trapezoids[trap_idx]
+            split_traps = trap.split_by(edge)
+            # for key, trap in split_traps.items():
+            #     split_traps[key] = self.add(trap)
+            """
+            if len(new_trapezoids) > 0:
+                last_splits = new_trapezoids[-1]
+                for key in ["top", "bottom"]:
+                    if key in last_splits and key in split_traps:
+                        merged_trap = self.try_merge(self.trapezoids[last_splits[key]],
+                                                     self.trapezoids[split_traps[key]])
+                        if merged_trap is not None:
+                            split_traps[key] = last_splits[key]
+                            self.update_idx(split_traps[key], merged_trap)
+            """
+            new_trapezoids.append(split_traps)
+        return new_trapezoids
+    
+    def try_merge(self, trap_left, trap_right):
+        # Check same originator vertex for line
+        if (trap_left.originators[-1] != trap_right.originators[0]).any():
+            print("[Trapezoids] Merge failed at originator check")
+            return None
+
+        # Check vertices to merge are the same
+        left_merger = np.array([trap_left.top_line[1], trap_left.bottom_line[1]])
+        right_merger = np.array([trap_right.top_line[0], trap_right.bottom_line[0]])
+        if (left_merger != right_merger).any():
+            print("[Trapezoids] Merge failed at same vertices check")
+            return None
+
+        # Check both vertices either above or below the originator 
+        if (left_merger[:, 1] <= trap_left.originators[-1]).all() or \
+           (left_merger[:, 1] >= trap_left.originators[-1]).all():
+            print("[Trapezoids] Merge Succeeed!!")
+            new_trap_verts = np.array([trap_left.top_line[0], trap_right.top_line[1], 
+                                       trap_right.bottom_line[1], trap_left.bottom_line[0]])        
+            new_trap_originators = np.concatenate([trap_left.originators[:-1], trap_right.originators[1:]])
+            return Trapezoid(new_trap_verts, new_trap_originators)
+
+        print("[Trapezoids] Merge failed both above, below check.")
+        return None
+
 
 
 class Query(object):
@@ -263,6 +405,9 @@ class Query(object):
             self.false_child = node
         else:
             raise ValueError("[Query] Neither child is none!")
+    
+    def unfilled(self):
+        return self.true_child is None or self.false_child is None
 
 
 class PointQuery(Query):
@@ -281,6 +426,8 @@ def linear_interpolation(edge, x):
         return edge[0][1]
 
 def make_lr(edge):
+    if len(edge) == 1:
+        return edge
     left_idx = np.argmin(edge[:, 0])
     return np.array([edge[left_idx], edge[1 - left_idx]])
 
@@ -307,6 +454,7 @@ class PointLocator(object):
     def lines(self):
         """ Returns a list of all the lines in the point locator object for easy visualization."""
         traps = self.trapezoids.trap_list()
+        return traps
         lines = []
         for trapezoid in traps:
             for idx in range(len(trapezoid)):
@@ -327,14 +475,12 @@ class PointLocator(object):
         if left_trap != right_trap:
             # Iterate through left trapezoids until find the trapezoid with p_r in it
             intersected = True
+            last_includes_point =  False
             while intersected:
                 print("edge while")
                 traps = self.trapezoids.right_adjacent(left_trap)
                 print("left_trap: {}".format(left_trap))
                 print("traps: {}".format(traps))
-                if right_trap in traps or len(traps) == 0:
-                    break
-                
                 intersected = False
                 for trap_idx in traps:
                     if self.trapezoids[trap_idx].is_intersected(edge):
@@ -342,32 +488,31 @@ class PointLocator(object):
                         left_trap = trap_idx
                         intersected = True
                         break
-            intersected_traps.append(right_trap)
+
+                if self.trapezoids[intersected_traps[-1]].includes_point_loose(p_r):
+                    last_includes_point =  True
+                    break
+            assert(last_includes_point), "Last point Not included in last Trapezoid!!"
+            # intersected_traps.append(right_trap)
 
         print("intersected_traps: {}".format(intersected_traps))
+
         # 2) Make the new trapezoids formed by the addition of the segment
-        new_traps = []
-        for trap_idx in intersected_traps:
-            new_traps.append(self.trapezoids[trap_idx].split_by(edge))
+        new_traps = self.trapezoids.split_trapezoids(edge, intersected_traps)
 
         for i, trap_idx in enumerate(intersected_traps):
             # 4) Remove the leaves of the tree corresponding to the old trapezoid + remove from trapezoids
             if len(new_traps[i]) > 0:
                 parent = self.pop_leaf(trap_idx)
                 to_add = new_traps[i] 
-
                 indices = {}
-                for key, trap in to_add.items():
-                    indices[key] = self.trapezoids.add(trap)
+                for key in to_add:
+                    indices[key] = self.trapezoids.add(to_add[key])
 
-                if "top" in indices:
-                    # 5) Replace them with the appropriate query into the new leaves
-                    new_node = SegmentQuery(edge, indices["top"], indices["bottom"])
-                    self.trapezoids[indices["top"]].set_parent(new_node)
-                    self.trapezoids[indices["bottom"]].set_parent(new_node)
-                else:
-                    assert(len(indices) == 0)
-                    continue
+
+                new_node = SegmentQuery(edge, indices["top"], indices["bottom"])
+                self.trapezoids[indices["top"]].set_parent(new_node)
+                self.trapezoids[indices["bottom"]].set_parent(new_node)
 
                 if "right" in indices:
                     new_node = PointQuery(p_r[0], new_node, indices["right"])

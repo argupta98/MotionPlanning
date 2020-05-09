@@ -3,6 +3,31 @@
 import numpy as np
 import random
 
+class Polygon(object):
+    """ A class with useful polygon functions."""
+    def __init__(self, points):
+        pass
+
+    def counter_clock(self):
+        """Set the vertices to go in conter-clockwise order."""
+        pass
+
+    def edges_for_vertex(self, vertex):
+        """Returns the neighboring edges of the vertex."""
+        pass
+
+    def edges_for_vertex_idx(self, vertex_idx):
+        """Returns the neighboring edges of the vertex."""
+        pass
+
+    def points_in(self, vertex_idx):
+        """Returns whether or not the vertex points into the polygon."""
+        pass
+
+    def contains(self, points):
+        """Returns whether the polygon surrounds all points."""
+        pass
+
 class Polygons(object):
     """ A class to hold several polygons and implements useful polygon operations."""
 
@@ -13,10 +38,6 @@ class Polygons(object):
         """
         self.polygons = polygons
     
-    def counter_clock(self):
-        """Set the vertices to go in conter-clockwise order."""
-        pass
-
     def merge_intersecting(self):
         """Merge intersecting polygons into a single polygon."""
         pass
@@ -37,11 +58,3 @@ class Polygons(object):
         
     def __getitem__(self, idx):
         return self.polygons[idx]
-
-    def edges_for_vertex(self, poly_idx, vertex):
-        """Returns the neighboring edges of the vertex."""
-        pass
-
-    def edges_for_vertex_idx(self, poly_idx, vertex_idx):
-        """Returns the neighboring edges of the vertex."""
-        pass

@@ -13,6 +13,21 @@ class GUI(object):
     def __init__(self, manual_configure=True):
         self.manual_configure = manual_configure
         self.obstacle_polygons = []
+        """ 
+        [np.array([[225, 166],
+       [112, 211],
+       [259, 224]]), np.array([[313, 162],
+       [251, 191],
+       [359, 221]]), np.array([[197, 284],
+       [293, 212],
+       [327, 278]]), np.array([[314, 221],
+       [388, 244],
+       [358, 277]]), np.array([[154, 238],
+       [237, 235],
+       [158, 279]])]
+       """
+
+
         self.last_polygon = []
         self.vehicle_polygon = []
         # Set matplotlib to interactive
@@ -105,6 +120,7 @@ class GUI(object):
             self.canvas.create_line(x, top, x, bottom, tag="trapezoid_line")
     
     def on_start_trap_decomposition(self):
+        print(self.obstacle_polygons)
         self.polygons = Polygons(self.obstacle_polygons)
         bounds = [10, 10, 790, 790]
         self.point_locator = PointLocator(bounds)
@@ -113,13 +129,14 @@ class GUI(object):
     
     def on_trap_step(self):
         # self.canvas.delete("all")
-        # self.canvas.delete("trapezoid_line")
         edge = self.random_edge_sampler.next()
+        self.canvas.create_line(*edge.flatten(), tag="trapezoid_line", fill="red")
         print("\n\n ------ iteration: {} -----".format(self.decomp_idx))
         self.point_locator.add_line(edge)
+        self.canvas.delete("trapezoid_line")
         lines = self.point_locator.lines()
         for line in lines:
-            self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
+            self.canvas.create_polygon(*line.flatten(), tag="trapezoid_line", fill="grey", outline="black")
         self.decomp_idx += 1
 
     def left_mouse_callback(self, event):  
