@@ -5,6 +5,7 @@ from matplotlib.widgets import Button
 import tkinter as tk
 from .polygon_triangulation import *
 from .c_space import *
+from .graph import *
 import time
 
 class GUI(object):
@@ -41,7 +42,7 @@ class GUI(object):
         banner_frame.pack(fill=tk.X, side=tk.TOP)
 
         # Main area + sidebar
-        middle_frame = tk.Frame(master=self.window, width=900, height=200)
+        middle_frame = tk.Frame(master=self.window, width=1000, height=200)
         middle_frame.pack(fill=tk.BOTH, side=tk.TOP)
 
         self.canvas = tk.Canvas(master=middle_frame, width=800, height=800, bg="white")
@@ -58,24 +59,35 @@ class GUI(object):
         start_vehicle_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Draw Vehicle", command=self.on_vehicle_click)
         start_vehicle_button.pack(side=tk.TOP)
 
-        start_triangulation = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Run Triangulation", command=self.on_triangulation_run)
+        start_triangulation = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Run Triangulation", command=self.on_triangulation_run)
         start_triangulation.pack(side=tk.TOP)
 
-        start_cspace = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Compute C-Space", command=self.on_compute_cspace)
+        start_cspace = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Compute C-Space", command=self.on_compute_cspace)
         start_cspace.pack(side=tk.TOP)
 
-        trap_decomp = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Start Decomposition", command=self.on_start_trap_decomposition)
+        trap_decomp = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Start Decomposition", command=self.on_start_trap_decomposition)
         trap_decomp.pack(side=tk.TOP)
 
-        trap_step = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Decomposition Step", command=self.on_trap_step)
+        trap_step = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Decomposition Step", command=self.on_trap_step)
         trap_step.pack(side=tk.TOP)
 
-        remove_poly = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Remove Inside Poly", command=self.on_remove_within_polygons)
+        remove_poly = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Remove Inside Poly", command=self.on_remove_within_polygons)
         remove_poly.pack(side=tk.TOP)
+
+        choose_end = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Choose Endpoint", command=self.on_choose_end)
+        choose_end.pack(side=tk.TOP)
+
+        plan_path = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Plan Path", command=self.on_plan_path)
+        plan_path.pack(side=tk.TOP)
 
         clear_polygons = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Clear Polygons", command=self.clear_polygons)
         clear_polygons.pack(side=tk.TOP)
         self.window.mainloop()
+    
+    def on_choose_end(self):
+        self.choose_endpoint = True
+        self.building_vehicle = False
+        self.building_polygon = False
 
     def show_instruction(s):
         print(s)
@@ -155,12 +167,21 @@ class GUI(object):
             point_list = self.last_polygon
         elif self.building_vehicle:
             point_list = self.vehicle_polygon
+        elif self.choose_endpoint:
+            point_list = []
         else:
             return
 
         point_list.append(np.array([event.x, event.y]))
         x = event.x
         y = event.y
+
+        if self.choose_endpoint:
+            self.endpoint = np.array([x, y])
+            self.choose_endpoint = False
+            self.canvas.create_oval(x-5, y-5, x+5, y+5, fill="green")
+            return
+
         self.canvas.create_oval(x-1, y-1, x+1, y+1)
 
         if len(point_list) > 1:
@@ -180,6 +201,12 @@ class GUI(object):
                 self.vehicle_polygon = np.array(self.vehicle_polygon, tag="vehicle")
             self.canvas.delete("polygon_lines")
 
+    def on_plan_path(self):
+        start = np.array(self.vehicle_polygon).mean(axis=0)
+        graph = Graph(self.point_locator, 10)
+        trapezoid_list = graph.search(start, self.endpoint)
+        for trap in trapezoid_list:
+            self.canvas.create_polygon(*trap.flatten(), tag="path_trap", fill="green")
     
     def on_obstacle_start_click(self):
         self.building_vehicle = False

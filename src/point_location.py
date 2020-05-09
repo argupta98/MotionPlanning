@@ -338,14 +338,6 @@ class Trapezoids(object):
             self.by_left_x[trapezoid.leftp()[0]] = SortedDict()
         self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
-        
-    def to_graph(self):
-        """Turns the trapezoids into a searchable graph."""
-        # Get leftmost trapezoid
-
-        # iteratively link all trapezoids to the right of it
-        pass
-
     def remove_traps_within_polygons(self, polygons):
         """ Removes trapezoids that lie within a polygon in polygons. """
 

@@ -44,7 +44,7 @@ class Polygons(object):
         """Returns whether a polygon surrounds all points."""
         points = trap.raw()
         for poly in self.polygons:
-            # TODO First check that the bounding boxes overlap
+            # TODO First check that the bounding boxes overlap to reduce time complexity
 
             contained = np.zeros(len(points)).astype(bool)
             for idx in range(len(poly)):
