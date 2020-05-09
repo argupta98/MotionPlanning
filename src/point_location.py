@@ -391,7 +391,7 @@ class Trapezoids(object):
         # Check vertices to merge are the same
         left_merger = np.array([trap_left.top_line[1], trap_left.bottom_line[1]])
         right_merger = np.array([trap_right.top_line[0], trap_right.bottom_line[0]])
-        if (left_merger != right_merger).any():
+        if not np.allclose(left_merger, right_merger, atol=10**-3):
             print("[Trapezoids] Merge failed at same vertices check")
             return None
 
@@ -471,7 +471,6 @@ class PointLocator(object):
     def lines(self):
         """ Returns a list of all the lines in the point locator object for easy visualization."""
         traps = self.trapezoids.trap_list()
-        return traps
         lines = []
         for trapezoid in traps:
             for idx in range(len(trapezoid)):

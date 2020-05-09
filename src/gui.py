@@ -136,7 +136,7 @@ class GUI(object):
         self.canvas.delete("trapezoid_line")
         lines = self.point_locator.lines()
         for line in lines:
-            self.canvas.create_polygon(*line.flatten(), tag="trapezoid_line", fill="grey", outline="black")
+            self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
         self.decomp_idx += 1
 
     def left_mouse_callback(self, event):  
