@@ -6,7 +6,7 @@ from sortedcontainers import SortedDict
 class Trapezoid(object):
     """Represents a single Trapezoid."""
 
-    def __init__(self, vertices, originator_vertices, parent=None):
+    def __init__(self, vertices, originator_vertices):
         self.vertices = vertices
         # find two topmost point
         y_sorted = np.argsort(self.vertices[:, 1])
@@ -18,7 +18,7 @@ class Trapezoid(object):
         self.left_p = self.vertices[np.argmin(self.vertices[:, 0])]
         self.right_p = self.vertices[np.argmax(self.vertices[:, 0])]
         assert(self.left_p[0] < self.right_p[0]), "left p: {} right_p: {}  all points: {}".format(self.left_p, self.right_p, self.vertices)
-        self.parent = parent
+        self.parents = []
 
         # Can have at most 2 originators
         assert(len(originator_vertices) <= 2)
@@ -33,8 +33,11 @@ class Trapezoid(object):
     def set_idx(self, i):
         self.index = i
     
-    def set_parent(self, parent):
-        self.parent = parent
+    def add_parent(self, parent):
+        if isinstance(parent, list):
+            self.parents.extend(parent)
+        else:
+            self.parents.append(parent)
 
     def set_line(self, top=True):
         """ Processes vertices to get the correct top line. """
@@ -306,12 +309,15 @@ class Trapezoids(object):
         pass
 
     def add(self, trapezoid):
-        self.trapezoids.append(trapezoid)
+        assert(trapezoid is not None)
+        # First check to see if the trapezoid is already added 
+        if trapezoid.leftp()[0] in self.by_left_x:
+            if trapezoid.bottom()[0, 1] in self.by_left_x[trapezoid.leftp()[0]]:
+                return self.by_left_x[trapezoid.leftp()[0]][trapezoid.bottom()[0, 1]].index
 
+        self.trapezoids.append(trapezoid)
         if trapezoid.leftp()[0] not in self.by_left_x:
-            print("[Add] leftp {} not in leftx: {}".format(trapezoid.leftp()[0], self.by_left_x.keys()))
             self.by_left_x[trapezoid.leftp()[0]] = SortedDict()
-        print("[Add] New leftp {}".format(trapezoid.leftp()[0]))
         self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
         # if trapezoid.rightp()[0] not in self.by_right_x:
@@ -321,6 +327,8 @@ class Trapezoids(object):
         return trapezoid.index
     
     def update_idx(self, idx, trapezoid):
+        print("Called Update idx")
+        assert(trapezoid is not None)
         old_trap = self.trapezoids[idx] 
         self.by_left_x[old_trap.leftp()[0]].pop(old_trap.bottom()[0, 1])
         self.trapezoids[idx] = trapezoid
@@ -349,21 +357,30 @@ class Trapezoids(object):
         for trap_idx in indices:
             trap = self.trapezoids[trap_idx]
             split_traps = trap.split_by(edge)
-            # for key, trap in split_traps.items():
-            #     split_traps[key] = self.add(trap)
-            """
-            if len(new_trapezoids) > 0:
-                last_splits = new_trapezoids[-1]
+            new_trapezoids.append(split_traps)
+        return new_trapezoids
+    
+    def add_and_check_merges(self, trapezoids):
+        for i in range(len(trapezoids)):
+            split_traps = trapezoids[i]
+            for key, trap in split_traps.items():
+                split_traps[key] = self.add(trap)
+
+            if i > 0:
+                last_splits = trapezoids[i-1]
                 for key in ["top", "bottom"]:
+                    print("[Merge] {}".format(key))
                     if key in last_splits and key in split_traps:
                         merged_trap = self.try_merge(self.trapezoids[last_splits[key]],
                                                      self.trapezoids[split_traps[key]])
                         if merged_trap is not None:
+                            self.pop(split_traps[key])
                             split_traps[key] = last_splits[key]
-                            self.update_idx(split_traps[key], merged_trap)
-            """
-            new_trapezoids.append(split_traps)
-        return new_trapezoids
+                            self.update_idx(last_splits[key], merged_trap)
+                        
+                        assert(self.trapezoids[last_splits[key]] is not None)
+                        assert(self.trapezoids[split_traps[key]] is not None)
+        return trapezoids
     
     def try_merge(self, trap_left, trap_right):
         # Check same originator vertex for line
@@ -449,7 +466,7 @@ class PointLocator(object):
         start_idx = self.trapezoids.add(start_trap)
         # Start query is the left bound
         self.tree_root = PointQuery(bounds[0], "failure", start_idx)
-        start_trap.set_parent(self.tree_root)
+        start_trap.add_parent(self.tree_root)
 
     def lines(self):
         """ Returns a list of all the lines in the point locator object for easy visualization."""
@@ -500,42 +517,51 @@ class PointLocator(object):
         # 2) Make the new trapezoids formed by the addition of the segment
         new_traps = self.trapezoids.split_trapezoids(edge, intersected_traps)
 
+        parents = []
+        for i, trap_idx in enumerate(intersected_traps):
+            if len(new_traps[i]) > 0:
+                parents.append(self.pop_leaf(trap_idx))
+            else:
+                parents.append(None)
+
+        new_traps = self.trapezoids.add_and_check_merges(new_traps)                
+
         for i, trap_idx in enumerate(intersected_traps):
             # 4) Remove the leaves of the tree corresponding to the old trapezoid + remove from trapezoids
-            if len(new_traps[i]) > 0:
-                parent = self.pop_leaf(trap_idx)
-                to_add = new_traps[i] 
-                indices = {}
-                for key in to_add:
-                    indices[key] = self.trapezoids.add(to_add[key])
-
+            if parents[i] is not None:
+                parent = parents[i]
+                indices = new_traps[i] 
+                #for key, trap in indices.items():
+                #    indices[key] = self.trapezoids.add(trap)
 
                 new_node = SegmentQuery(edge, indices["top"], indices["bottom"])
-                self.trapezoids[indices["top"]].set_parent(new_node)
-                self.trapezoids[indices["bottom"]].set_parent(new_node)
+                self.trapezoids[indices["top"]].add_parent(new_node)
+                self.trapezoids[indices["bottom"]].add_parent(new_node)
 
                 if "right" in indices:
                     new_node = PointQuery(p_r[0], new_node, indices["right"])
-                    self.trapezoids[indices["right"]].set_parent(new_node)
+                    self.trapezoids[indices["right"]].add_parent(new_node)
                 
                 if "left" in indices:
                     new_node = PointQuery(p_l[0], indices["left"], new_node)
-                    self.trapezoids[indices["left"]].set_parent(new_node)
+                    self.trapezoids[indices["left"]].add_parent(new_node)
 
-                parent.set_value(new_node)
+                for p in parent:
+                    p.set_value(new_node)
 
         self.trapezoids.clean()
 
 
     def pop_leaf(self, idx):
-        parent = self.trapezoids[idx].parent
+        parent = self.trapezoids[idx].parents
         self.trapezoids.pop(idx)
-        if parent.true_child == idx:
-            parent.true_child = None
-        elif parent.false_child == idx:
-            parent.false_child = None
-        else:
-            raise ValueError("[PointLocator] Parent does not have child: {}".format(idx))
+        for p in parent:
+            if p.true_child == idx:
+                p.true_child = None
+            elif p.false_child == idx:
+                p.false_child = None
+            else:
+                raise ValueError("[PointLocator] Parent does not have child: {}".format(idx))
         return parent
 
     def query(self, p):
