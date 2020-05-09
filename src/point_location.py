@@ -382,6 +382,7 @@ class Trapezoids(object):
         return trapezoids
     
     def try_merge(self, trap_left, trap_right):
+        print("trap left: {}  trap right: {}".format(trap_left, trap_right))
         # Check same originator vertex for line
         if (trap_left.originators[-1] != trap_right.originators[0]).any():
             print("[Trapezoids] Merge failed at originator check")
@@ -390,8 +391,8 @@ class Trapezoids(object):
         # Check vertices to merge are the same
         left_merger = np.array([trap_left.top_line[1], trap_left.bottom_line[1]])
         right_merger = np.array([trap_right.top_line[0], trap_right.bottom_line[0]])
-        if not np.allclose(left_merger, right_merger, atol=10**-3):
-            print("[Trapezoids] Merge failed at same vertices check")
+        if not np.allclose(left_merger, right_merger, atol=10**-1):
+            print("[Trapezoids] Merge failed at same vertices check: \n {} \n\n{}".format(left_merger, right_merger))
             return None
 
         # Check that the slopes match
@@ -408,8 +409,13 @@ class Trapezoids(object):
         if (left_merger[:, 1] <= trap_left.originators[-1]).all() or \
            (left_merger[:, 1] >= trap_left.originators[-1]).all():
             print("[Trapezoids] Merge Succeeed!!")
-            new_trap_verts = np.array([trap_left.top_line[0], trap_right.top_line[1], 
-                                       trap_right.bottom_line[1], trap_left.bottom_line[0]])        
+            new_trap_verts = [trap_left.top_line[0], trap_right.top_line[1]]
+            if not np.allclose(trap_right.bottom_line[1], trap_right.top_line[1]):
+                new_trap_verts.append(trap_right.bottom_line[1])
+
+            if not np.allclose(trap_left.bottom_line[0], trap_left.top_line[0]):
+                new_trap_verts.append(trap_right.bottom_line[0])
+            new_trap_verts = np.array(new_trap_verts)
             new_trap_originators = np.concatenate([trap_left.originators[:-1], trap_right.originators[1:]])
             return Trapezoid(new_trap_verts, new_trap_originators)
 

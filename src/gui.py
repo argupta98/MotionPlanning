@@ -217,7 +217,7 @@ class GUI(object):
         graph = Graph(self.point_locator, 10)
         trapezoid_list = graph.search(start, self.endpoint)
         for trap in trapezoid_list:
-            self.canvas.create_polygon(*trap.flatten(), tag="path_trap", fill="green")
+            self.canvas.create_polygon(*trap.flatten(), tag="path_trap", fill="green", outline="black")
     
     def on_obstacle_start_click(self):
         self.building_vehicle = False
