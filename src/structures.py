@@ -2,11 +2,13 @@
 
 import numpy as np
 import random
+from matplotlib.path import Path
 
 class Polygon(object):
     """ A class with useful polygon functions."""
     def __init__(self, points):
-        pass
+        self.points = points
+        self.path_repr = Path(points, closed=True)
 
     def counter_clock(self):
         """Set the vertices to go in conter-clockwise order."""
@@ -24,9 +26,12 @@ class Polygon(object):
         """Returns whether or not the vertex points into the polygon."""
         pass
 
-    def contains(self, points):
-        """Returns whether the polygon surrounds all points."""
-        pass
+    
+    def __len__(self):
+        return len(self.points)
+
+    def __getitem__(self, idx):
+        return self.points[idx]
 
 class Polygons(object):
     """ A class to hold several polygons and implements useful polygon operations."""
@@ -37,6 +42,9 @@ class Polygons(object):
             polygons (list): a list of (P,2) np.ndarrays which represent individual polygons.
         """
         self.polygons = polygons
+        self.path_repr_polygons = []
+        for poly in polygons:
+            self.path_repr_polygons.append(Path(poly, closed=True))
     
     def merge_intersecting(self):
         """Merge intersecting polygons into a single polygon."""
@@ -58,3 +66,12 @@ class Polygons(object):
         
     def __getitem__(self, idx):
         return self.polygons[idx]
+
+    def contains(self, points):
+        """Returns whether a polygon surrounds all points."""
+        for poly in self.path_repr_polygons:
+            contains = poly.contains_points(points, radius=-0.01)
+            print("contains: {}".format(contains))
+            if contains.all():
+                return True
+        return False

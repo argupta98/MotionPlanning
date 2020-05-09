@@ -340,6 +340,9 @@ class Trapezoids(object):
         
     def to_graph(self):
         """Turns the trapezoids into a searchable graph."""
+        # Get leftmost trapezoid
+
+        # iteratively link all trapezoids to the right of it
         pass
 
     def remove_traps_within_polygons(self, polygons):
@@ -395,6 +398,16 @@ class Trapezoids(object):
             print("[Trapezoids] Merge failed at same vertices check")
             return None
 
+        # Check that the slopes match
+        left_top_slope = slope(trap_left.top())
+        right_top_slope = slope(trap_right.top())
+        left_bottom_slope = slope(trap_left.bottom())
+        right_bottom_slope = slope(trap_right.bottom())
+        if not np.allclose(left_top_slope, right_top_slope) or \
+           not np.allclose(left_bottom_slope, right_bottom_slope):
+           print("[Trapezoids] Merge Failed at slope check")
+           return None
+
         # Check both vertices either above or below the originator 
         if (left_merger[:, 1] <= trap_left.originators[-1]).all() or \
            (left_merger[:, 1] >= trap_left.originators[-1]).all():
@@ -433,8 +446,11 @@ class PointQuery(Query):
             return self.true_child
         return self.false_child
 
+def slope(edge):
+    return float(edge[0][1] - edge[1][1]) / float(edge[0][0] - edge[1][0])
+
 def linear_interpolation(edge, x):
-    m = float(edge[0][1] - edge[1][1]) / float(edge[0][0] - edge[1][0])
+    m = slope(edge)
     if m != 0:
         b = edge[0][1] - m * edge[0][0]
         return m * x + b

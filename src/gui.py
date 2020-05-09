@@ -70,6 +70,9 @@ class GUI(object):
         trap_step = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Decomposition Step", command=self.on_trap_step)
         trap_step.pack(side=tk.TOP)
 
+        remove_poly = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Remove Inside Poly", command=self.on_remove_within_polygons)
+        remove_poly.pack(side=tk.TOP)
+
         clear_polygons = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Clear Polygons", command=self.clear_polygons)
         clear_polygons.pack(side=tk.TOP)
         self.window.mainloop()
@@ -138,6 +141,13 @@ class GUI(object):
         for line in lines:
             self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
         self.decomp_idx += 1
+    
+    def on_remove_within_polygons(self):
+        self.point_locator.remove_traps_within_polygons(self.polygons)
+        self.canvas.delete("trapezoid_line")
+        traps = self.point_locator.traps()
+        for trap in traps:
+            self.canvas.create_polygon(*trap.flatten(), tag="trapezoid_line", fill="grey", outline="black")
 
     def left_mouse_callback(self, event):  
         point_list = None
