@@ -52,7 +52,7 @@ class Polygons(object):
                 # Check each point to see if they lie on the edge
                 for i, point in enumerate(points):
                     contained[i] = contained[i] or point_on_edge(edge, point)
-            print("[contained] {}".format(contained))
+            # print("[contained] {}".format(contained))
 
             if contained.all():
                 return True

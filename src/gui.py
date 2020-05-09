@@ -31,9 +31,11 @@ class GUI(object):
 
         self.last_polygon = []
         self.vehicle_polygon = []
+        self.endpoint = None
         # Set matplotlib to interactive
         self.window = tk.Tk()
 
+        self.choose_endpoint = False
         self.building_polygon = False
         self.building_vehicle = False
 
@@ -124,15 +126,24 @@ class GUI(object):
         self.canvas.delete("obstacle")
 
     def on_compute_cspace(self):
-        expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
-        for polygon in expanded_polygons:
-            self.canvas.create_polygon(*list(polygon.astype(int).flatten()), tag="expanded_p")
-        decomposition_lines = trapezoid_decomposition_linear(expanded_polygons)
+        # expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
+        # for polygon in expanded_polygons:
+        #    self.canvas.create_polygon(*list(polygon.astype(int).flatten()), tag="expanded_p")
+        #decomposition_lines = trapezoid_decomposition_linear(expanded_polygons)
+        self.polygons = Polygons(self.obstacle_polygons)
+        bounds = [10, 10, 790, 790]
+        self.point_locator = PointLocator(bounds)
+        for edge in self.polygons.random_edge_sampler():
+            self.canvas.create_line(*edge.flatten(), tag="trapezoid_line", fill="red")
+            # print("\n\n ------ iteration: {} -----".format(self.decomp_idx))
+            self.point_locator.add_line(edge)
+            self.canvas.delete("trapezoid_line")
+            lines = self.point_locator.lines()
+            for line in lines:
+                self.canvas.create_line(*line.flatten(), tag="trapezoid_line")
+            # self.decomp_idx += 1
+        self.point_locator.remove_traps_within_polygons(self.polygons)
 
-        for x in decomposition_lines.keys():
-            og_y, top, bottom = decomposition_lines[x]
-            top = min(top, 800)
-            self.canvas.create_line(x, top, x, bottom, tag="trapezoid_line")
     
     def on_start_trap_decomposition(self):
         print(self.obstacle_polygons)
@@ -196,9 +207,9 @@ class GUI(object):
                 self.obstacle_polygons.append(point_list)
                 self.last_polygon = []
             else:
-                self.canvas.create_polygon(*list(point_list.flatten()), fill="red")
+                self.canvas.create_polygon(*list(point_list.flatten()), fill="red", tag="vehicle")
                 self.building_vehicle = False
-                self.vehicle_polygon = np.array(self.vehicle_polygon, tag="vehicle")
+                self.vehicle_polygon = np.array(self.vehicle_polygon)
             self.canvas.delete("polygon_lines")
 
     def on_plan_path(self):

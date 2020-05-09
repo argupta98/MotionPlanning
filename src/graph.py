@@ -37,26 +37,33 @@ class Graph(object):
     def build(self, leftmost):
         """Turns trapezoids into a searchable graph."""
         # iteratively link all trapezoids to the right of it
-
+        print("[Graph] building.")
         # Basically a BFS over trapezoids to get the connectivity
-        traps_to_add_queue = self.traps.right_adjacent_to(leftmost)
+        next_traps = self.traps.right_adjacent_to(leftmost)
+        traps_to_add_queue = []
+        for _, trap in next_traps.items():
+            traps_to_add_queue.append(trap.index)
+
+        print("[Graph] Queue: {}".format(traps_to_add_queue))
         seen_trap_indices = set()
         for trap in traps_to_add_queue:
+            print("[Graph] adding {}.".format(self.traps[trap]))
             # Get right adjacent
             right_adjacent = self.traps.right_adjacent(trap)
 
-            for next_trap in right_adjacent:
+            for next_trap_idx in right_adjacent:
                 # Add unseen traps to the queue
-                if next_trap.index not in seen_trap_indices:
-                    seen_trap_indices.add(next_trap.index)
-                    traps_to_add_queue.append(next_trap)
+                if next_trap_idx not in seen_trap_indices:
+                    seen_trap_indices.add(next_trap_idx)
+                    traps_to_add_queue.append(next_trap_idx)
                 
                 # make an undirected edge between the two
-                interface = Interface(trap, next_trap)
-                self.interfaces[trap.index][next_trap.index] = interface
-                self.interfaces[next_trap.index][trap.index] = interface
+                interface = Interface(self.traps[trap], self.traps[next_trap_idx])
+                self.interfaces[trap][next_trap_idx] = interface
+                self.interfaces[next_trap_idx][trap] = interface
     
     def search(self, start, end):
+        print("[Graph] searching.")
         start_trap_idx = self.pl.query(start)
         end_trap_idx = self.pl.query(end)
         expansion_queue = [SearchNode(start_trap_idx, None)]
@@ -90,6 +97,7 @@ class Graph(object):
         for i, trap_idx in enumerate(path):
             path[i] = self.traps[trap_idx].raw()
 
+        print("[Graph] search complete.")
         return path
         
 

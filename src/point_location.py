@@ -258,6 +258,13 @@ class Trapezoids(object):
             if trapezoid is not None:
                 traps.append(trapezoid.raw())
         return traps
+    
+    def right_adjacent_to(self, x):
+        if x in self.by_left_x:
+            print("[Right-Adjacent-To] x in self.by_left_x")
+            return self.by_left_x[x]
+        print("[Right-Adjacent-To] x not in self.by_left_x")
+        return []
 
     def right_adjacent(self, index):
         """Returns all trapezoids that share the right edge with the current 
@@ -311,15 +318,12 @@ class Trapezoids(object):
 
     def add(self, trapezoid):
         assert(trapezoid is not None)
-        # First check to see if the trapezoid is already added 
-        if trapezoid.leftp()[0] in self.by_left_x:
-            if trapezoid.bottom()[0, 1] in self.by_left_x[trapezoid.leftp()[0]]:
-                return self.by_left_x[trapezoid.leftp()[0]][trapezoid.bottom()[0, 1]].index
-
         self.trapezoids.append(trapezoid)
-        if trapezoid.leftp()[0] not in self.by_left_x:
-            self.by_left_x[trapezoid.leftp()[0]] = SortedDict()
-        self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.bottom()[0, 1], trapezoid)])
+
+        x = trapezoid.left_p[0]
+        if x not in self.by_left_x:
+            self.by_left_x[x] = SortedDict()
+        self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
         # if trapezoid.rightp()[0] not in self.by_right_x:
         #     self.by_right_x[trapezoid.rightp()[0]] = SortedDict()
@@ -334,9 +338,10 @@ class Trapezoids(object):
         self.by_left_x[old_trap.leftp()[0]].pop(old_trap.bottom()[0, 1])
         self.trapezoids[idx] = trapezoid
         trapezoid.set_idx(idx)
-        if trapezoid.leftp()[0] not in self.by_left_x:
-            self.by_left_x[trapezoid.leftp()[0]] = SortedDict()
-        self.by_left_x[trapezoid.leftp()[0]].update([(trapezoid.bottom()[0, 1], trapezoid)])
+        x = trapezoid.leftp()[0]
+        if x not in self.by_left_x:
+            self.by_left_x[x] = SortedDict()
+        self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
     def remove_traps_within_polygons(self, polygons):
         """ Removes trapezoids that lie within a polygon in polygons. """
@@ -345,14 +350,6 @@ class Trapezoids(object):
             if trap is not None and polygons.contains_trap(trap):
                 self.pop(trap.index)
                 print("[Remove Within Polygons] Popped Trapezoid!")
-
-        """
-            for point in polygon:
-                potential_traps = self.by_left_x[point[0]]
-                for trap in potential_traps:
-                    if polygon.contains(trap.raw()):
-                        self.pop(trap.index)
-        """
     
     def split_trapezoids(self, edge, indices):
         new_trapezoids = []
