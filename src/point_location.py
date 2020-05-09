@@ -2,6 +2,7 @@
 
 import numpy as np
 from sortedcontainers import SortedDict
+from .line_utils import *
 
 class Trapezoid(object):
     """Represents a single Trapezoid."""
@@ -348,12 +349,18 @@ class Trapezoids(object):
     def remove_traps_within_polygons(self, polygons):
         """ Removes trapezoids that lie within a polygon in polygons. """
 
-        for polygon in polygons:
+        for trap in self.trapezoids:
+            if trap is not None and polygons.contains_trap(trap):
+                self.pop(trap.index)
+                print("[Remove Within Polygons] Popped Trapezoid!")
+
+        """
             for point in polygon:
                 potential_traps = self.by_left_x[point[0]]
                 for trap in potential_traps:
                     if polygon.contains(trap.raw()):
                         self.pop(trap.index)
+        """
     
     def split_trapezoids(self, edge, indices):
         new_trapezoids = []
@@ -446,23 +453,6 @@ class PointQuery(Query):
             return self.true_child
         return self.false_child
 
-def slope(edge):
-    return float(edge[0][1] - edge[1][1]) / float(edge[0][0] - edge[1][0])
-
-def linear_interpolation(edge, x):
-    m = slope(edge)
-    if m != 0:
-        b = edge[0][1] - m * edge[0][0]
-        return m * x + b
-    else:
-        assert(edge[0][1] == edge[1][1])
-        return edge[0][1]
-
-def make_lr(edge):
-    if len(edge) == 1:
-        return edge
-    left_idx = np.argmin(edge[:, 0])
-    return np.array([edge[left_idx], edge[1 - left_idx]])
 
 class SegmentQuery(Query):
     def __call__(self, point):
@@ -492,6 +482,12 @@ class PointLocator(object):
             for idx in range(len(trapezoid)):
                 lines.append(np.array([trapezoid[idx], trapezoid[(idx + 1) % len(trapezoid)]]))
         return lines
+
+    def traps(self):
+        return self.trapezoids.trap_list()
+
+    def remove_traps_within_polygons(self, polygons):
+        self.trapezoids.remove_traps_within_polygons(polygons)
 
     def add_line(self, edge):
         """ Add a line segment defined by p1 and p2 to the point location struct."""

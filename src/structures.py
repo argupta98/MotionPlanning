@@ -3,35 +3,7 @@
 import numpy as np
 import random
 from matplotlib.path import Path
-
-class Polygon(object):
-    """ A class with useful polygon functions."""
-    def __init__(self, points):
-        self.points = points
-        self.path_repr = Path(points, closed=True)
-
-    def counter_clock(self):
-        """Set the vertices to go in conter-clockwise order."""
-        pass
-
-    def edges_for_vertex(self, vertex):
-        """Returns the neighboring edges of the vertex."""
-        pass
-
-    def edges_for_vertex_idx(self, vertex_idx):
-        """Returns the neighboring edges of the vertex."""
-        pass
-
-    def points_in(self, vertex_idx):
-        """Returns whether or not the vertex points into the polygon."""
-        pass
-
-    
-    def __len__(self):
-        return len(self.points)
-
-    def __getitem__(self, idx):
-        return self.points[idx]
+from line_utils import *
 
 class Polygons(object):
     """ A class to hold several polygons and implements useful polygon operations."""
@@ -67,11 +39,22 @@ class Polygons(object):
     def __getitem__(self, idx):
         return self.polygons[idx]
 
-    def contains(self, points):
+
+    def contains_trap(self, trap):
         """Returns whether a polygon surrounds all points."""
-        for poly in self.path_repr_polygons:
-            contains = poly.contains_points(points, radius=-0.01)
-            print("contains: {}".format(contains))
-            if contains.all():
+        points = trap.raw()
+        for poly in self.polygons:
+            # TODO First check that the bounding boxes overlap
+
+            contained = np.zeros(len(points)).astype(bool)
+            for idx in range(len(poly)):
+                edge = make_lr(np.array([poly[idx], poly[(idx + 1) % len(poly)]]))
+                # Check each point to see if they lie on the edge
+                for i, point in enumerate(points):
+                    contained[i] = contained[i] or point_on_edge(edge, point)
+            print("[contained] {}".format(contained))
+
+            if contained.all():
                 return True
+
         return False
