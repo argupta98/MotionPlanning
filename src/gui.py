@@ -47,6 +47,9 @@ class GUI(object):
         random_polygon_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Random Polygons", command=self.on_random)
         random_polygon_button.pack(side=tk.TOP)
 
+        test_polygon_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Test Case", command=self.test_case)
+        test_polygon_button.pack(side=tk.TOP)
+
         start_vehicle_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Draw Vehicle", command=self.on_vehicle_click)
         start_vehicle_button.pack(side=tk.TOP)
 
@@ -80,7 +83,15 @@ class GUI(object):
 
         for polygon in self.obstacle_polygons:
             self.canvas.create_polygon(*polygon.flatten(), tag="obstacle")
+    
+    def test_case(self):
+        self.obstacle_polygons = [np.array([[100.41771139, 497.65833091],
+                                            [193.75398968, 339.39024785],
+                                            [168.82113323, 479.70436783]
+                                 ])]
 
+        for polygon in self.obstacle_polygons:
+            self.canvas.create_polygon(*polygon.flatten(), tag="obstacle")
 
     def on_choose_end(self):
         self.choose_endpoint = True

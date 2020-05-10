@@ -16,10 +16,28 @@ class Polygons(object):
             polygons (list): a list of (P,2) np.ndarrays which represent individual polygons.
         """
         self.polygons = polygons
-    
+
+    @staticmethod
+    def make_convex(max_num_vertices, bounds):
+        """Returns a single convex polygon with at most max_num_vertices."""
+        assert(max_num_vertices >= 3)
+
+        # Fill with the remaining vertices
+        vertices = np.random.rand(max_num_vertices, 2)
+        vertices[:, 0] *= bounds[1, 0] - bounds[0, 0] - 4
+        vertices[:, 0] += bounds[0, 0] + 2 
+        vertices[:, 1] *= bounds[1, 1] - bounds[0, 1] - 4
+        vertices[:, 1] += bounds[0, 1] + 2
+
+        # Generate convex hull
+        hull = ConvexHull(vertices).vertices
+        return vertices[hull]
+
     @staticmethod
     def split_freespace(freespace):
         # Randomly split a list of N free spaces to N + 1 free spaces
+        if len(freespace) == 0:
+            return
         split_idx = int(np.random.rand() * (len(freespace) - 1))
 
         freespace_box = freespace[split_idx] # [[min_x, min_y], [max_x, max_y]]
@@ -46,13 +64,13 @@ class Polygons(object):
 
 
     @staticmethod
-    def make_random(bounds, num_vertices):
+    def make_random(bounds, num_vertices, return_num_made=False):
         """Makes a random disjoint set of convex polygons within the bounds
         and with num_vertices vertices in total."""
-        print("Generating Random polygons")
+        # print("Generating Random polygons")
         free_space = [np.array([[bounds[0], bounds[1]], [bounds[2], bounds[3]]])]
         # Randomly split a few times to start 
-        for _ in range(20):
+        for _ in range(int(0.3 * num_vertices)):
             Polygons.split_freespace(free_space)
 
         polygons = []
@@ -62,29 +80,32 @@ class Polygons(object):
             if len(free_space) < 3:
                 Polygons.split_freespace(free_space)
 
-            # Choose a random section
+            # Choose a random section large enough to reasonably hold a polygon
             found_freespace = False
             while not found_freespace:
+                # print(len(free_space))
+                if len(free_space) == 0:
+                    break
                 fill_idx = int(np.random.rand() * (len(free_space) - 1))
                 box = free_space[fill_idx]
                 free_space.pop(fill_idx)
                 if box[1, 0] - box[0, 0] > 10 and box[1, 1] - box[0, 1] > 10:
                     found_freespace = True
+            
+            # In case all free space is taken up
+            if not found_freespace:
+                break
 
-            # Fill with the remaining vertices
             verts_left = num_vertices - vertices_generated
-            vertices = np.random.rand(verts_left, 2)
-            vertices[:, 0] *= (box[1, 0] - box[0, 0]) - 4
-            vertices[:, 0] += box[0, 0] + 2 
-            vertices[:, 1] *= box[1, 1] - box[0, 1] - 4
-            vertices[:, 1] += box[0, 1] + 2
+            polygon = Polygons.make_convex(verts_left, box)
+            polygons.append(polygon)
+            vertices_generated += len(polygon)
 
-            # Generate convex hull
-            hull = ConvexHull(vertices).vertices
-            polygons.append(vertices[hull])
-            vertices_generated += len(hull)
-        print("Finished with: {} Polygons".format(len(polygons)))
-        return polygons
+        # print("Finished with: {} Polygons".format(len(polygons)))
+        if not return_num_made:
+            return polygons
+        else:
+            return polygons, vertices_generated
 
 
     def merge_intersecting(self):

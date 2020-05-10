@@ -279,6 +279,7 @@ class Trapezoids(object):
         count = 0
         for trap in self.trapezoids:
             if trap is not None:
+                print(trap)
                 count += 1
         return count
 
@@ -297,16 +298,22 @@ class Trapezoids(object):
         else:
             return []
         # First bottom line below the top line
-        idx = choices.bisect_left(trap.top()[1, 1]) - 1
+        idx = choices.bisect_left(trap.top()[1, 1])
+        # print("trap top: {}".format(trap.top()[1, 1]))
+        if idx == len(choices):
+           idx -= 1
+
+        # print(idx)
         keys = choices.keys()
+        # print("[Right-adjacent] keys: {}".format(keys))
         if idx >= 0:
             curr_trap = choices[keys[idx]]
         else:
             return []
 
         right_adjacent = []
-        while trap.top()[1, 1] > curr_trap.bottom()[0, 1]:
-            if trap.bottom()[1, 1] < curr_trap.top()[0, 1]:
+        while trap.bottom()[1, 1] <= curr_trap.top()[0, 1]:
+            if trap.top()[1, 1] >= curr_trap.bottom()[0, 1]:
                 right_adjacent.append(curr_trap.index)
             
             idx -= 1
@@ -483,6 +490,9 @@ class PointLocator(object):
         # Start query is the left bound
         self.tree_root = PointQuery(bounds[0], "failure", start_idx)
         start_trap.add_parent(self.tree_root)
+        # For Debugging
+        self.edge_history = []
+        self.bounds = bounds
 
     def lines(self):
         """ Returns a list of all the lines in the point locator object for easy visualization."""
@@ -504,6 +514,8 @@ class PointLocator(object):
         edge = make_lr(edge)
         p_l = edge[0]
         p_r = edge[1]
+
+        self.edge_history.append(edge)
 
         # 1) Find the trapezoids that are intersected by the segment
         left_trap = self.query(p_l)
@@ -527,7 +539,8 @@ class PointLocator(object):
                 if self.trapezoids[intersected_traps[-1]].includes_point_loose(p_r):
                     last_includes_point =  True
                     break
-            assert(last_includes_point), "Last point Not included in last Trapezoid!!"
+            # print(intersected_traps)
+            # assert(last_includes_point), "Last point Not included in last Trapezoid!! \n Edge History: {}\n Bounds: {}".format(self.edge_history, self.bounds)
             # intersected_traps.append(right_trap)
 
 
@@ -548,8 +561,6 @@ class PointLocator(object):
             if parents[i] is not None:
                 parent = parents[i]
                 indices = new_traps[i] 
-                #for key, trap in indices.items():
-                #    indices[key] = self.trapezoids.add(trap)
 
                 if edge[0, 0] < edge[1, 0]:
                     new_node = SegmentQuery(edge, indices["top"], indices["bottom"])
