@@ -13,21 +13,8 @@ class GUI(object):
 
     def __init__(self, manual_configure=True):
         self.manual_configure = manual_configure
-        self.obstacle_polygons = []
-        """ 
-        [np.array([[225, 166],
-       [112, 211],
-       [259, 224]]), np.array([[313, 162],
-       [251, 191],
-       [359, 221]]), np.array([[197, 284],
-       [293, 212],
-       [327, 278]]), np.array([[314, 221],
-       [388, 244],
-       [358, 277]]), np.array([[154, 238],
-       [237, 235],
-       [158, 279]])]
-       """
-
+        self.obstacle_polygons = [np.array([[200, 100], [240, 30], [280, 100]]), 
+                                  np.array([[100, 300], [400, 300], [400, 200]])]
 
         self.last_polygon = []
         self.vehicle_polygon = []
@@ -126,11 +113,11 @@ class GUI(object):
         self.canvas.delete("obstacle")
 
     def on_compute_cspace(self):
-        # expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
-        # for polygon in expanded_polygons:
-        #    self.canvas.create_polygon(*list(polygon.astype(int).flatten()), tag="expanded_p")
+        expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
+        for polygon in expanded_polygons:
+            self.canvas.create_polygon(*list(polygon.astype(int).flatten()), tag="expanded_p")
         #decomposition_lines = trapezoid_decomposition_linear(expanded_polygons)
-        self.polygons = Polygons(self.obstacle_polygons)
+        self.polygons = Polygons(expanded_polygons)
         bounds = [10, 10, 790, 790]
         self.point_locator = PointLocator(bounds)
         for edge in self.polygons.random_edge_sampler():
@@ -158,6 +145,7 @@ class GUI(object):
         edge = self.random_edge_sampler.next()
         self.canvas.create_line(*edge.flatten(), tag="trapezoid_line", fill="red")
         print("\n\n ------ iteration: {} -----".format(self.decomp_idx))
+        print("Adding Edge: {}".format(edge))
         self.point_locator.add_line(edge)
         self.canvas.delete("trapezoid_line")
         lines = self.point_locator.lines()

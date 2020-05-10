@@ -151,6 +151,16 @@ class Trapezoid(object):
     def raw(self):
         return self.vertices
 
+    def is_left_pointed(self):
+        top_y = self.top_line[0, 1]
+        bottom_y = self.bottom_line[0, 1]
+        return top_y == bottom_y
+
+    def is_right_pointed(self):
+        top_y = self.top_line[1, 1]
+        bottom_y = self.bottom_line[1, 1]
+        return top_y == bottom_y
+
     def split_by(self, edge):
         """ Returns the trapezoids formed as a result of splitting by an edge. 
             `top`: 
@@ -258,12 +268,20 @@ class Trapezoids(object):
             if trapezoid is not None:
                 traps.append(trapezoid.raw())
         return traps
-    
+
+    def trap_count(self):
+        count = 0
+        for trap in self.trapezoids:
+            if trap is not None:
+                print(trap)
+                count += 1
+        return count
+
     def right_adjacent_to(self, x):
         if x in self.by_left_x:
-            print("[Right-Adjacent-To] x in self.by_left_x")
+            # print("[Right-Adjacent-To] x in self.by_left_x")
             return self.by_left_x[x]
-        print("[Right-Adjacent-To] x not in self.by_left_x")
+        # print("[Right-Adjacent-To] x not in self.by_left_x")
         return []
 
     def right_adjacent(self, index):
@@ -271,21 +289,21 @@ class Trapezoids(object):
         one.
         """
         trap = self.trapezoids[index]
-        print("[Right-Adjacent] rightp: {}".format(trap.rightp()[0]))
+        # print("[Right-Adjacent] rightp: {}".format(trap.rightp()[0]))
         if trap.rightp()[0] in self.by_left_x:
             choices = self.by_left_x[trap.rightp()[0]]
         else:
-            print("[Right-Adjacent] rightp not in by_left_x")
+            # print("[Right-Adjacent] rightp not in by_left_x")
             return []
         # First bottom line below the top line
         idx = choices.bisect_left(trap.top()[1, 1]) - 1
         keys = choices.keys()
-        print("[Right-Adjacent] idx: {}".format(idx))
-        print("[Right-Adjacent] keys: {}".format(keys))
+        # print("[Right-Adjacent] idx: {}".format(idx))
+        # print("[Right-Adjacent] keys: {}".format(keys))
         if idx >= 0:
             curr_trap = choices[keys[idx]]
         else:
-            print("[Right-Adjacent] idx < 0")
+            # print("[Right-Adjacent] idx < 0")
             return []
 
         right_adjacent = []
@@ -307,7 +325,8 @@ class Trapezoids(object):
         trap = self.trapezoids[idx]
         self.trapezoids[idx] = None
         self.to_remove.append(idx)
-        self.by_left_x[trap.leftp()[0]].pop(trap.bottom()[0, 1])
+        if not trap.is_left_pointed():
+            self.by_left_x[trap.leftp()[0]].pop(trap.bottom()[0, 1])
 
     def clean(self):
         # TODO: Reset indices in the trapezoids
@@ -315,19 +334,18 @@ class Trapezoids(object):
         # for idx in self.to_remove:
         #    self.trapezoids.remove(idx)
         pass
-
+    
+    
     def add(self, trapezoid):
         assert(trapezoid is not None)
         self.trapezoids.append(trapezoid)
 
-        x = trapezoid.left_p[0]
-        if x not in self.by_left_x:
-            self.by_left_x[x] = SortedDict()
-        self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
+        if not trapezoid.is_left_pointed(): # Don't insert triangles that will never be intersected
+            x = trapezoid.left_p[0]
+            if x not in self.by_left_x:
+                self.by_left_x[x] = SortedDict()
+            self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
-        # if trapezoid.rightp()[0] not in self.by_right_x:
-        #     self.by_right_x[trapezoid.rightp()[0]] = SortedDict()
-        #self.by_right_x[trapezoid.rightp()[0]].update((trapezoid.top()[1, 1], trapezoid))
         trapezoid.set_idx(len(self.trapezoids) - 1)
         return trapezoid.index
     
@@ -335,13 +353,17 @@ class Trapezoids(object):
         print("Called Update idx")
         assert(trapezoid is not None)
         old_trap = self.trapezoids[idx] 
-        self.by_left_x[old_trap.leftp()[0]].pop(old_trap.bottom()[0, 1])
+        if not old_trap.is_left_pointed():
+            self.by_left_x[old_trap.leftp()[0]].pop(old_trap.bottom()[0, 1])
+
         self.trapezoids[idx] = trapezoid
         trapezoid.set_idx(idx)
         x = trapezoid.leftp()[0]
+        # print("after removal: {}".format(self.by_left_x[old_trap.leftp()[0]]))
         if x not in self.by_left_x:
             self.by_left_x[x] = SortedDict()
         self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
+        # print("after update: {}".format(self.by_left_x[old_trap.leftp()[0]]))
 
     def remove_traps_within_polygons(self, polygons):
         """ Removes trapezoids that lie within a polygon in polygons. """
@@ -409,12 +431,16 @@ class Trapezoids(object):
         if (left_merger[:, 1] <= trap_left.originators[-1]).all() or \
            (left_merger[:, 1] >= trap_left.originators[-1]).all():
             print("[Trapezoids] Merge Succeeed!!")
+            print("left_top: {}".format(trap_left.top_line))
+            print("right_top: {}".format(trap_right.top_line))
+            print("left_bottom: {}".format(trap_left.bottom_line))
+            print("right_bottom: {}".format(trap_right.bottom_line))
             new_trap_verts = [trap_left.top_line[0], trap_right.top_line[1]]
             if not np.allclose(trap_right.bottom_line[1], trap_right.top_line[1]):
                 new_trap_verts.append(trap_right.bottom_line[1])
 
             if not np.allclose(trap_left.bottom_line[0], trap_left.top_line[0]):
-                new_trap_verts.append(trap_right.bottom_line[0])
+                new_trap_verts.append(trap_left.bottom_line[0])
             new_trap_verts = np.array(new_trap_verts)
             new_trap_originators = np.concatenate([trap_left.originators[:-1], trap_right.originators[1:]])
             return Trapezoid(new_trap_verts, new_trap_originators)
