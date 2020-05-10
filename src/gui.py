@@ -44,6 +44,9 @@ class GUI(object):
         start_polygon_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Draw Polygons", command=self.on_obstacle_start_click)
         start_polygon_button.pack(side=tk.TOP)
 
+        random_polygon_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Random Polygons", command=self.on_random)
+        random_polygon_button.pack(side=tk.TOP)
+
         start_vehicle_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Draw Vehicle", command=self.on_vehicle_click)
         start_vehicle_button.pack(side=tk.TOP)
 
@@ -72,6 +75,13 @@ class GUI(object):
         clear_polygons.pack(side=tk.TOP)
         self.window.mainloop()
     
+    def on_random(self):
+        self.obstacle_polygons = Polygons.make_random([10, 10, 790, 790], 100)
+
+        for polygon in self.obstacle_polygons:
+            self.canvas.create_polygon(*polygon.flatten(), tag="obstacle")
+
+
     def on_choose_end(self):
         self.choose_endpoint = True
         self.building_vehicle = False

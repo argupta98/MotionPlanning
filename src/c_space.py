@@ -63,6 +63,7 @@ def trapezoid_decomposition_pl(polygons, bounds):
     point_locator = PointLocator(bounds)
     for edge in polygons.random_edge_sampler():
         point_locator.add_line(edge)
+    return point_locator
 
 
 def freespace_graph(trapezoids):
