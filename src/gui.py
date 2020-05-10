@@ -13,8 +13,16 @@ class GUI(object):
 
     def __init__(self, manual_configure=True):
         self.manual_configure = manual_configure
-        self.obstacle_polygons = [np.array([[200, 100], [240, 30], [280, 100]]), 
+        self.obstacle_polygons = []
+        self.obstacle_polygons = [np.array([[249, 111],
+                    [184, 172],
+                    [311, 170]]), np.array([[261, 213],
+                    [386, 198],
+                    [283, 268]])]
+        """
+        [np.array([[200, 100], [240, 30], [280, 100]]), 
                                   np.array([[100, 300], [400, 300], [400, 200]])]
+        """
 
         self.last_polygon = []
         self.vehicle_polygon = []

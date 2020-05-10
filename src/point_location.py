@@ -428,8 +428,9 @@ class Trapezoids(object):
            return None
 
         # Check both vertices either above or below the originator 
-        if (left_merger[:, 1] <= trap_left.originators[-1]).all() or \
-           (left_merger[:, 1] >= trap_left.originators[-1]).all():
+        print("Originator: {}".format(trap_left.originators[-1]))
+        if (left_merger[:, 1] <= trap_left.originators[-1, 1]).all() or \
+           (left_merger[:, 1] >= trap_left.originators[-1, 1]).all():
             print("[Trapezoids] Merge Succeeed!!")
             print("left_top: {}".format(trap_left.top_line))
             print("right_top: {}".format(trap_right.top_line))

@@ -168,9 +168,10 @@ class TestTrapezoidsRightAdjacent(unittest.TestCase):
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(249)), 2)
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(261)), 2)
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(283)), 2)
-        # self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(371)), 1)
+        print(point_locator.trapezoids.right_adjacent_to(371))
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(371)), 1)
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(386)), 1)
-        # self.assertEqual(point_locator.trapezoids.trap_count(), 13)
+        self.assertEqual(point_locator.trapezoids.trap_count(), 13)
 
         point_locator.remove_traps_within_polygons(polygons)
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(10)), 1)
