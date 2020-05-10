@@ -4,6 +4,7 @@ import numpy as np
 from sortedcontainers import SortedDict, SortedList
 from .structures import Polygons, Polygon
 from .point_location import PointLocator
+from .line_utils import *
 
 def compute_cspace(obstacle_polygons, vehicle_polygon):
     """ Computes the configuration space of a set of polygons
@@ -130,7 +131,7 @@ def minkowski_sum_fast(obstacle, vehicle):
     output_polygon = [obstacle.edges[o_start, 0], obstacle.edges[o_start, 1]]
     start_angle = obstacle_edge_angles[o_start]
     last_angle = obstacle_edge_angles[o_start]
-    print("obstacle start: {}".format(start_angle))
+    #print("obstacle start: {}".format(start_angle))
 
     # quick linear scan to find the next larger angle in vehicle
     while vehicle_edge_angles[v_start] < last_angle:
@@ -139,13 +140,15 @@ def minkowski_sum_fast(obstacle, vehicle):
     o_idx = 1
     v_idx = 0
 
+    # total_offset = np.zeros(2)
+    translation = []
     # Add all points into one large shape
     for _ in range(1, len(vehicle_edge_angles) + len(obstacle_edge_angles)):
         # Transform to the correct value
         curr_v_idx = (v_idx + v_start) % len(vehicle_edge_angles)
         curr_o_idx = (o_idx + o_start) % len(obstacle_edge_angles)
-        print("curr_v_idx: {}".format(curr_v_idx))
-        print("curr_o_idx: {}".format(curr_o_idx))
+        # print("curr_v_idx: {}".format(curr_v_idx))
+        # print("curr_o_idx: {}".format(curr_o_idx))
         # angle_v = 1000
         #angle_o = 1000
         #if v_idx < len(vehicle_edge_angles):
@@ -153,8 +156,8 @@ def minkowski_sum_fast(obstacle, vehicle):
         # if o_idx < len(obstacle_edge_angles):
         angle_o = obstacle_edge_angles[curr_o_idx]
 
-        print("angle_v: {}".format(angle_v))
-        print("angle_o: {}".format(angle_o))
+        # print("angle_v: {}".format(angle_v))
+        # print("angle_o: {}".format(angle_o))
         # Get angular difference        
         diff_v = angle_v - last_angle
         diff_o = angle_o - last_angle
@@ -164,23 +167,57 @@ def minkowski_sum_fast(obstacle, vehicle):
             diff_o = diff_o + 2 * np.pi
 
         edge = None 
+        chose_v = False
         if diff_v < diff_o:
-            print("chose v!")
+            # print("chose v!")
             edge = vehicle.edges[curr_v_idx]
             v_idx += 1
             last_angle = angle_v
+            chose_v = True
         else:
-            print("chose o!")
+            # print("chose o!")
             edge = obstacle.edges[curr_o_idx]
             o_idx += 1
             last_angle = angle_o
         
         edge_vector = edge[1] - edge[0]
+        if chose_v:
+            point_to_centroid = vehicle.center - edge[1]
+            translation.append(tuple(point_to_centroid + output_polygon[-1]))
         output_polygon.append(output_polygon[-1] + edge_vector)
 
-    assert(v_idx == len(vehicle.edges))
-    assert(o_idx == len(obstacle.edges))
+    assert(v_idx == len(vehicle.edges)), "vehicle: {} obstacle: {}".format(vehicle, obstacle)
+    assert(o_idx == len(obstacle.edges)), "vehicle: {} obstacle: {}".format(vehicle, obstacle)
 
-    return np.array(output_polygon)
+    # Clean up 
+    # remove points in middle of lines
+    """
+    to_remove = []
+    for idx in range(len(output_polygon)):
+        b_idx = (idx - 1) % len(output_polygon)
+        a_idx = (idx + 1) % len(output_polygon)
+        a_pt = output_polygon[a_idx]
+        b_pt = output_polygon[b_idx]
+        c_pt = output_polygon[idx]
+        if point_on_edge(np.array([a_pt, b_pt]), c_pt):
+            to_remove.append(idx)
+
+    for i, idx in enumerate(to_remove):
+        output_polygon.pop(idx - i)
+    """
+
+    if (output_polygon[0] == output_polygon[-1]).all():
+        output_polygon = output_polygon[:-1]
+
+    output_polygon = Polygon(np.array(output_polygon))
+    # align top left corners of minkowski and vehicle
+    corner_offset = vehicle.center - vehicle.top_left_vertex()
+    minkowski_offset_location = output_polygon.top_left_vertex() + corner_offset
+    shift = minkowski_offset_location - obstacle.top_left_vertex()
+
+    # print("obstacle top cornder: {}".format(obstacle.top_left_vertex()))
+
+    # print("total_offset: {}".format(total_offset))
+    return output_polygon.points - shift
 
 

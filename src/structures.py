@@ -14,18 +14,21 @@ class Polygon(object):
         self.edges = self._edges()
         self.center = np.mean(points, axis=0)
 
-    def is_counterclockwise(self):
-        edge_diff_1 = self.edges[0, 1] - self.edges[0, 0]
-        edge_diff_2 = self.edges[1, 1] - self.edges[1, 0]
-        edge_idx = 1
-        z = np.cross(edge_diff_1, edge_diff_2)
-        while z == 0:
-            edge_diff_1 = self.edges[i, 1] - self.edges[i, 0]
-            edge_diff_2 = self.edges[i+1, 1] - self.edges[i+1, 0]
-            edge_idx += 1
-            z = np.cross(edge_diff_1, edge_diff_2)
+    def top_left_vertex(self):
+        """ Return the highest vertex on the leftmost-side."""
+        left_idx = np.argmin(self.points[:, 0])
+        left_value = self.points[left_idx, 0]
+        # Find all points with this same value
+        contender_idx = np.argwhere(self.points[:, 0] == left_value)[:, 0]
+        contenders = self.points[contender_idx]
+        top_idx = np.argmax(contenders[:, 1])
+        return contenders[top_idx]
 
-        return z < 0
+    def is_counterclockwise(self):
+        total = 0
+        for edge in self.edges:
+            total += (edge[1, 0] - edge[0, 0]) * (edge[1, 1] + edge[0, 1])
+        return total > 0
 
     def counterclockwise(self):
         """Make edges go counter-clockwise."""
@@ -52,7 +55,8 @@ class Polygon(object):
             normal_vec = normal(edge)
             normal_options = np.array([normal_vec, -1 * normal_vec])
             center_line = edge.mean(axis=0) - self.center
-            products = np.matmul(normal_options.T, center_line)
+            products = np.matmul(normal_options, center_line)
+            assert(products.prod() < 0)
             normal_vec = normal_options[np.argmax(products)]
             normal_vec = np.divide(normal_vec, np.linalg.norm(normal_vec))
 
@@ -69,10 +73,8 @@ class Polygon(object):
                 min_angle_idx = i
         return np.array(angles), min_angle_idx
 
-    
-    def start_point(self):
-        """The first point for the ordered edges."""
-        pass
+    def __repr__(self):
+        return str(self.points)
 
 
 
