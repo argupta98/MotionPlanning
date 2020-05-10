@@ -23,5 +23,8 @@ class DecompositionCases(Timer):
         """ O(NlogN) """
         return values * np.log(values)
 
+    def plot_complexity(self, values):
+        return values
+
     def run(self):
         self.run_suite(self.CASES)

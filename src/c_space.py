@@ -2,7 +2,7 @@
 from scipy.spatial import ConvexHull
 import numpy as np
 from sortedcontainers import SortedDict, SortedList
-from .structures import Polygons
+from .structures import Polygons, Polygon
 from .point_location import PointLocator
 
 def compute_cspace(obstacle_polygons, vehicle_polygon):
@@ -16,11 +16,10 @@ def compute_cspace(obstacle_polygons, vehicle_polygon):
 
     enlarged_obstacles = []
     for obstacle in obstacle_polygons:
-        enlarged_obstacles.append(minkowski_sum(obstacle, vehicle_polygon))
+        enlarged_obstacles.append(minkowski_sum_fast(obstacle, vehicle_polygon))
     
     # TODO: merge intersecting polygons into one.
 
-    # TODO: Compute Trapezoid Decomposition
     return enlarged_obstacles
 
 def trapezoid_decomposition_linear(polygons):
@@ -80,11 +79,11 @@ def linear_interpolation(p_1, p_2, x):
             
 
 def minkowski_sum(obstacle, vehicle):
-    """ Computes minkowski sum to inflate the obstacle polygon in O(M + N).
+    """ Computes minkowski sum to inflate the obstacle polygon in O(MN).
 
     Args:
         obstacle_polygons (np.ndarray): An (M, 2) numpy array with the polygon representation of obstacles.
-        vehicle_polygon (np.ndarray): An (N, 2) array of points representing the (convex) shape of the vehicle.
+        vehicle_polygon (np.ndarray): An (N, 2) array of points representing the shape of the vehicle.
     """
 
     vehicle = vehicle.astype(np.float32)
@@ -104,4 +103,84 @@ def minkowski_sum(obstacle, vehicle):
     # Compute the convex hull
     hull = ConvexHull(minkowski_shape).vertices
     return minkowski_shape[hull]
+
+
+def minkowski_sum_fast(obstacle, vehicle):
+    """ Computes minkowski sum to inflate the obstacle polygon in O(M + N).
+
+    Args:
+        obstacle_polygons (np.ndarray): An (M, 2) numpy array with the polygon representation of obstacles.
+        vehicle_polygon (np.ndarray): An (N, 2) array of points representing the shape of the vehicle.
+    """
+
+    vehicle = Polygon(-vehicle.astype(np.float32))
+    obstacle = Polygon(obstacle)
+
+    # Convert both shapes to go counter-clockwise
+    vehicle.counterclockwise()
+    obstacle.counterclockwise()
+
+    # get the proper edge ordering based on the 
+    vehicle_edge_angles, v_start = vehicle.edge_angles()
+    obstacle_edge_angles, o_start = obstacle.edge_angles()
+    print("vehicle edge angles: {}".format(vehicle_edge_angles))
+    print("obstacle edge angles: {}".format(obstacle_edge_angles))
+
+    # Start with obstacle points to get the right location
+    output_polygon = [obstacle.edges[o_start, 0], obstacle.edges[o_start, 1]]
+    start_angle = obstacle_edge_angles[o_start]
+    last_angle = obstacle_edge_angles[o_start]
+    print("obstacle start: {}".format(start_angle))
+
+    # quick linear scan to find the next larger angle in vehicle
+    while vehicle_edge_angles[v_start] < last_angle:
+        v_start =  (v_start + 1) % len(vehicle_edge_angles)
+
+    o_idx = 1
+    v_idx = 0
+
+    # Add all points into one large shape
+    for _ in range(1, len(vehicle_edge_angles) + len(obstacle_edge_angles)):
+        # Transform to the correct value
+        curr_v_idx = (v_idx + v_start) % len(vehicle_edge_angles)
+        curr_o_idx = (o_idx + o_start) % len(obstacle_edge_angles)
+        print("curr_v_idx: {}".format(curr_v_idx))
+        print("curr_o_idx: {}".format(curr_o_idx))
+        # angle_v = 1000
+        #angle_o = 1000
+        #if v_idx < len(vehicle_edge_angles):
+        angle_v = vehicle_edge_angles[curr_v_idx]
+        # if o_idx < len(obstacle_edge_angles):
+        angle_o = obstacle_edge_angles[curr_o_idx]
+
+        print("angle_v: {}".format(angle_v))
+        print("angle_o: {}".format(angle_o))
+        # Get angular difference        
+        diff_v = angle_v - last_angle
+        diff_o = angle_o - last_angle
+        if diff_v < 0:
+            diff_v = diff_v + 2 * np.pi
+        if diff_o < 0:
+            diff_o = diff_o + 2 * np.pi
+
+        edge = None 
+        if diff_v < diff_o:
+            print("chose v!")
+            edge = vehicle.edges[curr_v_idx]
+            v_idx += 1
+            last_angle = angle_v
+        else:
+            print("chose o!")
+            edge = obstacle.edges[curr_o_idx]
+            o_idx += 1
+            last_angle = angle_o
+        
+        edge_vector = edge[1] - edge[0]
+        output_polygon.append(output_polygon[-1] + edge_vector)
+
+    assert(v_idx == len(vehicle.edges))
+    assert(o_idx == len(obstacle.edges))
+
+    return np.array(output_polygon)
+
 

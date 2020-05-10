@@ -29,6 +29,11 @@ def make_lr(edge):
     left_idx = np.argmin(edge[:, 0])
     return np.array([edge[left_idx], edge[1 - left_idx]])
 
+def normal(edge):
+    """Returns the normal of the edge."""
+    dy = edge[1, 1] - edge[0, 1]
+    dx = edge[1, 0] - edge[0, 0]
+    return np.array([-dy, dx])
 
 def point_on_edge(edge, point):
     if edge[0, 0] < edge[1, 0]:

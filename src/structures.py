@@ -3,8 +3,77 @@
 import numpy as np
 import random
 from matplotlib.path import Path
+import math
 from scipy.spatial import ConvexHull
 from line_utils import *
+
+class Polygon(object):
+    """ Holds points and implements useful features."""
+    def __init__(self, points):
+        self.points = points
+        self.edges = self._edges()
+        self.center = np.mean(points, axis=0)
+
+    def is_counterclockwise(self):
+        edge_diff_1 = self.edges[0, 1] - self.edges[0, 0]
+        edge_diff_2 = self.edges[1, 1] - self.edges[1, 0]
+        edge_idx = 1
+        z = np.cross(edge_diff_1, edge_diff_2)
+        while z == 0:
+            edge_diff_1 = self.edges[i, 1] - self.edges[i, 0]
+            edge_diff_2 = self.edges[i+1, 1] - self.edges[i+1, 0]
+            edge_idx += 1
+            z = np.cross(edge_diff_1, edge_diff_2)
+
+        return z < 0
+
+    def counterclockwise(self):
+        """Make edges go counter-clockwise."""
+        # Flip if clockwise
+        if not self.is_counterclockwise():
+            self.points = np.flip(self.points, axis=0)
+            self.edges = self._edges()
+
+    def _edges(self):
+        edges = []
+        for i in range(len(self.points)):
+            edges.append(np.array([self.points[i], self.points[(i+1) % len(self.points)]]))
+        return np.array(edges)
+
+    def edge_angles(self):
+        """Returns edge vectors in order of angle from y axis, starting with the closest to 0."""
+        edges = self.edges
+        angles = []
+        pos_y = np.array([0, 1])
+        min_angle_idx = 0
+        min_angle = 400
+        for i, edge in enumerate(edges):
+            # Get the normal vector that points out of the shape
+            normal_vec = normal(edge)
+            normal_options = np.array([normal_vec, -1 * normal_vec])
+            center_line = edge.mean(axis=0) - self.center
+            products = np.matmul(normal_options.T, center_line)
+            normal_vec = normal_options[np.argmax(products)]
+            normal_vec = np.divide(normal_vec, np.linalg.norm(normal_vec))
+
+            # compute the angle with positive y
+            # ax*by-ay*bx, ax*bx+ay*by
+            tan_1 = normal_vec[0] * pos_y[1] 
+            tan_2 = normal_vec[1] * pos_y[1]
+            angle = math.atan2(tan_1, tan_2)
+            if angle < 0:
+                angle += 2 * np.pi
+            angles.append(angle)
+            if angle < min_angle:
+                min_angle = angle
+                min_angle_idx = i
+        return np.array(angles), min_angle_idx
+
+    
+    def start_point(self):
+        """The first point for the ordered edges."""
+        pass
+
 
 
 class Polygons(object):

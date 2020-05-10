@@ -9,20 +9,20 @@ from src.structures import Polygons
 # Decomposition Cases
 class MinkowskiCases(Timer):
     # Specific cases  
-    CASES = [([3 * i, [10, 10, 790 * i/10.0, 790 * i / 10.0]]) for i in range(2, 30, 10)]
+    CASES = [([3 * i, [10, 10, 790 * i/10.0, 790 * i / 10.0]]) for i in range(3, 10000, 100)]
 
     def __init__(self):
-        super(MinkowskiCases, self).__init__(trapezoid_decomposition_pl)
+        super(MinkowskiCases, self).__init__(minkowski_sum)
         self.complexity_name = "O(m + n)"
         self.fn_name = "Minkowski Sum"
     
     def make_input(self, case):
         # Pick a random partition to split into m, n
         m_p_n = case[0]
-        m = int(np.random.rand() * (m_p_n - 3))
+        m = int(np.random.rand() * (m_p_n - 6)) + 3
         n = m_p_n - m
         bounds = case[1]
-        bounds = np.array([[bounds[0], bounds[1], [bounds[2], bounds[3]]]])
+        bounds = np.array([[bounds[0], bounds[1]], [bounds[2], bounds[3]]])
         polygon_vehicle = Polygons.make_convex(m, bounds)
         polygon_obstacle = Polygons.make_convex(n, bounds)
 
@@ -31,6 +31,9 @@ class MinkowskiCases(Timer):
     
     def complex_fn(self, values):
         """ O(m + n) """
+        return values
+    
+    def plot_complexity(self, values):
         return values
 
     def run(self):

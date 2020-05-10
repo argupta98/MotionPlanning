@@ -53,8 +53,8 @@ class GUI(object):
         start_vehicle_button = tk.Button(master=sidebar_frame, width=11, height=3, bg="grey", text="Draw Vehicle", command=self.on_vehicle_click)
         start_vehicle_button.pack(side=tk.TOP)
 
-        start_triangulation = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Run Triangulation", command=self.on_triangulation_run)
-        start_triangulation.pack(side=tk.TOP)
+        start_minkowski = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Run minkowski", command=self.on_minkowski)
+        start_minkowski.pack(side=tk.TOP)
 
         start_cspace = tk.Button(master=sidebar_frame, width=20, height=3, bg="grey", text="Compute C-Space", command=self.on_compute_cspace)
         start_cspace.pack(side=tk.TOP)
@@ -85,13 +85,19 @@ class GUI(object):
             self.canvas.create_polygon(*polygon.flatten(), tag="obstacle")
     
     def test_case(self):
-        self.obstacle_polygons = [np.array([[100.41771139, 497.65833091],
-                                            [193.75398968, 339.39024785],
-                                            [168.82113323, 479.70436783]
-                                 ])]
+        self.vehicle_polygon = np.array([[200, 100],
+                             [300, 100],
+                             [250, 0]])
+
+        self.obstacle_polygons = [np.array([[400, 50],
+                            [800, 50],
+                            [800, 200], 
+                           [400, 200]])]
 
         for polygon in self.obstacle_polygons:
-            self.canvas.create_polygon(*polygon.flatten(), tag="obstacle")
+            self.canvas.create_polygon(*polygon.flatten(), tag="obstacle", fill="grey")
+
+        self.canvas.create_polygon(*self.vehicle_polygon.flatten(), tag="vehicle", fill="red")
 
     def on_choose_end(self):
         self.choose_endpoint = True
@@ -131,6 +137,12 @@ class GUI(object):
 
     def clear_polygons(self):
         self.canvas.delete("obstacle")
+
+    def on_minkowski(self):
+        expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
+        for polygon in expanded_polygons:
+            self.canvas.create_polygon(*list(polygon.astype(int).flatten()), tag="expanded_p")
+
 
     def on_compute_cspace(self):
         expanded_polygons = compute_cspace(self.obstacle_polygons, self.vehicle_polygon)
@@ -217,7 +229,7 @@ class GUI(object):
             else:
                 self.canvas.create_polygon(*list(point_list.flatten()), fill="red", tag="vehicle")
                 self.building_vehicle = False
-                self.vehicle_polygon = np.array(self.vehicle_polygon)
+                self.vehicle_polygon = point_list
             self.canvas.delete("polygon_lines")
 
     def on_plan_path(self):

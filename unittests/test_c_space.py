@@ -5,8 +5,13 @@ class TestCSpace(unittest.TestCase):
 
     def test_minkowski(self):
         # A simple testcase to ensure that the minkowski sum alg is running properly
-        pass
-    
-    def test_trapezoid_decomposition(self):
-        pass
+        triangle = np.array([[200, 100],
+                             [300, 100],
+                             [250, 0]])
 
+        square = np.array([[400, 50],
+                           [800, 50],
+                           [800, 200],
+                           [400, 200]])
+        
+        output = minkowski_sum_fast(triangle, square)
