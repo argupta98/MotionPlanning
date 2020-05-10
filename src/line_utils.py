@@ -31,5 +31,8 @@ def make_lr(edge):
 
 
 def point_on_edge(edge, point):
-    y_val = linear_interpolation(edge, point[0])
-    return np.allclose(y_val, point[1])
+    if edge[0, 0] < edge[1, 0]:
+        y_val = linear_interpolation(edge, point[0])
+        return np.allclose(y_val, point[1])
+    else:
+        return point[1] <= np.max(edge[:, 1]) and point[1] >= np.min(edge[:, 1])

@@ -78,7 +78,7 @@ class Trapezoid(object):
     
     def is_intersected(self, edge):
         """ Returns whether an edge intersects the trapezoid."""
-        assert(edge[0, 0] < edge[1, 0])
+        assert(edge[0, 0] <= edge[1, 0])
         # Cannot have an intersection
         # Check edge below the top line (left side)
         if edge[0, 0] < self.top_line[0, 0]:
@@ -176,7 +176,7 @@ class Trapezoid(object):
 
         if curr_trap.is_intersected(edge):
             print("\n[Trapezoid {}] Splitting".format(self.index))
-            assert(edge[0, 0] < edge[1, 0])
+            assert(edge[0, 0] <= edge[1, 0])
             # Check for endpoints within trapezoid
             for i, key in enumerate(["left", "right"]):
                 # print(key)
@@ -222,26 +222,32 @@ class Trapezoid(object):
 
             # Split the remaining trapezoid area into top and bottom
 
-            # Center line for split
-            center_left = [curr_trap.left_p[0], linear_interpolation(edge, curr_trap.left_p[0])]
-            center_right = [curr_trap.right_p[0], linear_interpolation(edge, curr_trap.right_p[0])]
-            center_points = np.array([center_right, center_left])
+            if edge[0, 0] < edge[1, 0]:
+                # Center line for split
+                center_left = [curr_trap.left_p[0], linear_interpolation(edge, curr_trap.left_p[0])]
+                center_right = [curr_trap.right_p[0], linear_interpolation(edge, curr_trap.right_p[0])]
+                center_points = np.array([center_right, center_left])
 
-            # print("center: {}".format(center_points))
-            # Top and bottom trapezoid points
-            top_points = np.concatenate([center_points, curr_trap.top()], axis=0)
-            bottom_points = np.concatenate([center_points, curr_trap.bottom()], axis=0)
+                # print("center: {}".format(center_points))
+                # Top and bottom trapezoid points
+                top_points = np.concatenate([center_points, curr_trap.top()], axis=0)
+                bottom_points = np.concatenate([center_points, curr_trap.bottom()], axis=0)
 
-            top_originators = []
-            bottom_originators = []
-            for originator in curr_trap.originators:
-                if originator[0] in top_points[:, 0]:
-                    top_originators.append(originator)
-                if originator[0] in bottom_points[:, 0]:
-                    bottom_originators.append(originator)
+                top_originators = []
+                bottom_originators = []
+                for originator in curr_trap.originators:
+                    if originator[0] in top_points[:, 0]:
+                        top_originators.append(originator)
+                    if originator[0] in bottom_points[:, 0]:
+                        bottom_originators.append(originator)
 
-            new_traps["top"] = Trapezoid(top_points, top_originators)
-            new_traps["bottom"] = Trapezoid(bottom_points, bottom_originators)
+                new_traps["top"] = Trapezoid(top_points, top_originators)
+                new_traps["bottom"] = Trapezoid(bottom_points, bottom_originators)
+
+            else:
+                assert("right" not in new_traps)
+                if "left" in new_traps:
+                    new_traps["right"] = curr_trap
 
             # Shorten the appropriate extensions and merge appropriate trapezoids
             # for originator in curr_trap.originators:
@@ -567,17 +573,22 @@ class PointLocator(object):
                 #for key, trap in indices.items():
                 #    indices[key] = self.trapezoids.add(trap)
 
-                new_node = SegmentQuery(edge, indices["top"], indices["bottom"])
-                self.trapezoids[indices["top"]].add_parent(new_node)
-                self.trapezoids[indices["bottom"]].add_parent(new_node)
+                if edge[0, 0] < edge[1, 0]:
+                    new_node = SegmentQuery(edge, indices["top"], indices["bottom"])
+                    self.trapezoids[indices["top"]].add_parent(new_node)
+                    self.trapezoids[indices["bottom"]].add_parent(new_node)
 
-                if "right" in indices:
-                    new_node = PointQuery(p_r[0], new_node, indices["right"])
-                    self.trapezoids[indices["right"]].add_parent(new_node)
-                
-                if "left" in indices:
-                    new_node = PointQuery(p_l[0], indices["left"], new_node)
+                    if "right" in indices:
+                        new_node = PointQuery(p_r[0], new_node, indices["right"])
+                        self.trapezoids[indices["right"]].add_parent(new_node)
+                    
+                    if "left" in indices:
+                        new_node = PointQuery(p_l[0], indices["left"], new_node)
+                        self.trapezoids[indices["left"]].add_parent(new_node)
+                else:
+                    new_node = PointQuery(edge[0, 0], indices["left"], indices["right"])
                     self.trapezoids[indices["left"]].add_parent(new_node)
+                    self.trapezoids[indices["right"]].add_parent(new_node)
 
                 for p in parent:
                     p.set_value(new_node)
