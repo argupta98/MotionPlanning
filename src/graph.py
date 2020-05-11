@@ -44,13 +44,13 @@ class Graph(object):
         for _, trap in next_traps.items():
             traps_to_add_queue.append(trap.index)
 
-        print("[Graph] Queue: {}".format(traps_to_add_queue))
+        #print("[Graph] Queue: {}".format(traps_to_add_queue))
         seen_trap_indices = set()
         for trap in traps_to_add_queue:
             # print("[Graph] adding {}.".format(self.traps[trap]))
             # Get right adjacent
             right_adjacent = self.traps.right_adjacent(trap)
-            print("[Graph] Current: {} Right Adjacent: {}".format(trap, right_adjacent))
+            # print("[Graph] Current: {} Right Adjacent: {}".format(trap, right_adjacent))
 
             for next_trap_idx in right_adjacent:
                 # Add unseen traps to the queue

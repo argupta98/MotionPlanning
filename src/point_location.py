@@ -331,7 +331,7 @@ class Trapezoids(object):
         trap = self.trapezoids[idx]
         self.trapezoids[idx] = None
         self.to_remove.append(idx)
-        if not trap.is_left_pointed():
+        if trap is not None and not trap.is_left_pointed():
             self.by_left_x[trap.leftp()[0]].pop(trap.bottom()[0, 1])
 
     def clean(self):
@@ -543,7 +543,7 @@ class PointLocator(object):
                     last_includes_point =  True
                     break
             # print("Intersected: {}".format(intersected_traps))
-            assert(last_includes_point), "Last point Not included in last Trapezoid!! \n Edge History: {}\n Bounds: {}".format(self.edge_history, self.bounds)
+            assert(last_includes_point), "Last point Not included in last Trapezoid!! Are there intersecting Polygons?"
             # intersected_traps.append(right_trap)
 
 

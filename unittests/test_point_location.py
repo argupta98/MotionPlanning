@@ -2,6 +2,7 @@
 import unittest
 from src.point_location import *
 from src.structures import *
+from src.graph import *
 import numpy as np
 from numpy import array
 from tqdm import tqdm
@@ -192,7 +193,15 @@ class TestTrapezoidsRightAdjacent(unittest.TestCase):
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(283)), 1)
         self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(386)), 1)
         
-        
+class TestGraphBuilding(unittest.TestCase):
+    def test_random(self):
+        bounds = [10, 10, 790, 790]
+        for _ in tqdm(range(1000)):
+            random_polygons = Polygons(Polygons.make_random(bounds, 50))
+            point_locator = PointLocator(bounds)
+            for edge in random_polygons.random_edge_sampler():
+                point_locator.add_line(edge)
+            graph = Graph(point_locator, 10)
         
 
 class TestIntegration(unittest.TestCase):
@@ -321,7 +330,7 @@ class TestIntegration(unittest.TestCase):
                 
     def test_random(self):
         bounds = [10, 10, 790, 790]
-        for _ in tqdm(range(10000)):
+        for _ in tqdm(range(100)):
             random_polygons = Polygons(Polygons.make_random(bounds, 40))
             point_locator = PointLocator(bounds)
             for edge in random_polygons.random_edge_sampler():
