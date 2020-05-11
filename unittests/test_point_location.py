@@ -4,6 +4,7 @@ from src.point_location import *
 from src.structures import *
 import numpy as np
 from numpy import array
+from tqdm import tqdm
 
 
 class TestTrapezoidRep(unittest.TestCase):
@@ -44,6 +45,14 @@ class TestTrapezoidRep(unittest.TestCase):
         self.assertTrue(np.allclose(trap.bottom_line, np.array([[275., 122.], [353., 123.98305085]])))
         self.assertEqual(trap.left_p[0], 275)
         self.assertEqual(trap.right_p[0], 353)
+    
+    def test_is_left_pointed(self):
+        vertices = np.array([[309., 169.],
+                            [471., 170.71247357],
+                            [471.,  69.]])
+        trap = Trapezoid(vertices, originator_vertices=[])
+        self.assertTrue(trap.is_left_pointed())
+
 
 
 class TestTrapezoidIntersection(unittest.TestCase):
@@ -278,19 +287,42 @@ class TestIntegration(unittest.TestCase):
     
     def test_specific_5(self):
         bounds = [10, 10, 790, 790]
-        edges = [array([[443.19056065, 737.49247924],
-                    [550.09243882, 780.10355842]]), array([[309.16166686, 169.66403988],
-                    [471.56239633,  69.82914756]]), array([[309.16166686, 169.66403988],
-                    [782.69981345, 174.32152293]]), array([[156.19444535, 719.7160022 ],
-                    [550.09243882, 780.10355842]])]
+        edges = [array([[443, 737],
+                    [550, 780]]), array([[309, 169],
+                    [471,  69]]), array([[309, 169],
+                    [782, 174]]), array([[156, 719],
+                    [550, 780]])]
+        
         point_locator = PointLocator(bounds)
-        for edge in edges:
-            point_locator.add_line(edge)
+
+        point_locator.add_line(edges[0])
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(10)), 1)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(443)), 2)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(550)), 1)
+
+        point_locator.add_line(edges[1])
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(10)), 1)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(309)), 2)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(443)), 2)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(471)), 1)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(550)), 1)
+        self.assertEqual(point_locator.trapezoids.trap_count(), 7)
+
+        point_locator.add_line(edges[2])
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(10)), 1)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(309)), 2)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(443)), 2)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(471)), 1)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(550)), 1)
+        self.assertEqual(len(point_locator.trapezoids.right_adjacent_to(782)), 1)
+        self.assertEqual(point_locator.trapezoids.trap_count(), 9)
+
+        point_locator.add_line(edges[3])
                 
     def test_random(self):
         bounds = [10, 10, 790, 790]
-        for _ in range(10000):
-            random_polygons = Polygons(Polygons.make_random(bounds, 6))
+        for _ in tqdm(range(10000)):
+            random_polygons = Polygons(Polygons.make_random(bounds, 40))
             point_locator = PointLocator(bounds)
             for edge in random_polygons.random_edge_sampler():
                 point_locator.add_line(edge)

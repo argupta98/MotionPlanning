@@ -20,7 +20,7 @@ class Timer(object):
     def run_case(self, timing_case):
         times = []
         difficulty = []
-        for i in range(100):
+        for i in range(50):
             true_difficulty, inp = self.make_input(timing_case)
             difficulty.append(true_difficulty)
             start = time()
@@ -66,17 +66,17 @@ class Timer(object):
 
 
         complexity = np.array(complexity_bins.keys())
-        complexity_sorted_indices = np.argsort(complexity)
-        complexity = complexity[complexity_sorted_indices]
         plot_complexity = self.plot_complexity(complexity)
+        complexity_sorted_indices = np.argsort(plot_complexity)
+        complexity = complexity[complexity_sorted_indices]
         complexity_fn = self.complex_fn(complexity)
 
         case_avgs = np.array(avgs)[complexity_sorted_indices]
-        fit_coeffs_avg = np.polyfit(complexity_fn, case_avgs, 1)
-        print(fit_coeffs_avg)
         print("complexity fn shape: {}".format(complexity_fn.shape))
         print("case avgs: {}".format(case_avgs.shape))
         print("plot complexity shape: {}".format(plot_complexity.shape))
+
+        fit_coeffs_avg = np.polyfit(complexity_fn, case_avgs, 1)
         fit_avg = np.poly1d(fit_coeffs_avg)
         plt.scatter(plot_complexity, case_avgs, color='green', label='mean runtime raw')
         plt.plot(plot_complexity, fit_avg(complexity_fn), '--', color='green', label='{} fit to mean'.format(self.complexity_name))

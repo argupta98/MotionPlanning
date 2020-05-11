@@ -279,12 +279,13 @@ class Trapezoids(object):
         count = 0
         for trap in self.trapezoids:
             if trap is not None:
-                print(trap)
+                # print(trap)
                 count += 1
         return count
 
     def right_adjacent_to(self, x):
         if x in self.by_left_x:
+            # print("[Right-Adjacent-To] x: {} values: {}".format(x, self.by_left_x[x]))
             return self.by_left_x[x]
         return []
 
@@ -361,11 +362,12 @@ class Trapezoids(object):
             self.by_left_x[old_trap.leftp()[0]].pop(old_trap.bottom()[0, 1])
 
         self.trapezoids[idx] = trapezoid
-        trapezoid.set_idx(idx)
-        x = trapezoid.leftp()[0]
-        if x not in self.by_left_x:
-            self.by_left_x[x] = SortedDict()
-        self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
+        if not trapezoid.is_left_pointed():
+            trapezoid.set_idx(idx)
+            x = trapezoid.leftp()[0]
+            if x not in self.by_left_x:
+                self.by_left_x[x] = SortedDict()
+            self.by_left_x[x].update([(trapezoid.bottom()[0, 1], trapezoid)])
 
     def remove_traps_within_polygons(self, polygons):
         """ Removes trapezoids that lie within a polygon in polygons. """
@@ -528,6 +530,7 @@ class PointLocator(object):
             last_includes_point =  False
             while intersected:
                 traps = self.trapezoids.right_adjacent(left_trap)
+                # print("traps: {}".format(traps))
                 intersected = False
                 for trap_idx in traps:
                     if self.trapezoids[trap_idx].is_intersected(edge):
@@ -539,8 +542,8 @@ class PointLocator(object):
                 if self.trapezoids[intersected_traps[-1]].includes_point_loose(p_r):
                     last_includes_point =  True
                     break
-            # print(intersected_traps)
-            # assert(last_includes_point), "Last point Not included in last Trapezoid!! \n Edge History: {}\n Bounds: {}".format(self.edge_history, self.bounds)
+            # print("Intersected: {}".format(intersected_traps))
+            assert(last_includes_point), "Last point Not included in last Trapezoid!! \n Edge History: {}\n Bounds: {}".format(self.edge_history, self.bounds)
             # intersected_traps.append(right_trap)
 
 
