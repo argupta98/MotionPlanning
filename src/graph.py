@@ -6,8 +6,6 @@ import numpy as np
 class Interface(object):
     """ Defines the edge the connects two trapezoids. """
     def __init__(self, trap_left, trap_right):
-        # self.trap_left = trap_left
-        # self.trap_right = trap_right
         top_choices = np.array([trap_left.top()[1], trap_right.top()[0]])
         bottom_choices = np.array([trap_left.bottom()[1], trap_right.bottom()[0]])
         top_point = top_choices[np.argmin(top_choices[:, 1])]
@@ -36,21 +34,17 @@ class Graph(object):
     
     def build(self, leftmost):
         """Turns trapezoids into a searchable graph."""
-        # iteratively link all trapezoids to the right of it
-        print("[Graph] building.")
+        # iteratively link all trapezoids to the right of the leftmost coordinate
         # Basically a BFS over trapezoids to get the connectivity
         next_traps = self.traps.right_adjacent_to(leftmost)
         traps_to_add_queue = []
         for _, trap in next_traps.items():
             traps_to_add_queue.append(trap.index)
 
-        #print("[Graph] Queue: {}".format(traps_to_add_queue))
         seen_trap_indices = set()
         for trap in traps_to_add_queue:
-            # print("[Graph] adding {}.".format(self.traps[trap]))
             # Get right adjacent
             right_adjacent = self.traps.right_adjacent(trap)
-            # print("[Graph] Current: {} Right Adjacent: {}".format(trap, right_adjacent))
 
             for next_trap_idx in right_adjacent:
                 # Add unseen traps to the queue
@@ -64,7 +58,7 @@ class Graph(object):
                 self.interfaces[next_trap_idx][trap] = interface
     
     def search(self, start, end):
-        print("[Graph] searching.")
+        """ Search for the path from start to end."""
         start_trap_idx = self.pl.query(start)
         end_trap_idx = self.pl.query(end)
         expansion_queue = [SearchNode(start_trap_idx, None)]

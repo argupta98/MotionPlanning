@@ -25,26 +25,28 @@ class Polygon(object):
         return contenders[top_idx]
 
     def is_counterclockwise(self):
+        """Checks if the points are counter-clockwise."""
         total = 0
         for edge in self.edges:
             total += (edge[1, 0] - edge[0, 0]) * (edge[1, 1] + edge[0, 1])
         return total > 0
 
     def counterclockwise(self):
-        """Make edges go counter-clockwise."""
+        """Make edges and points go counter-clockwise."""
         # Flip if clockwise
         if not self.is_counterclockwise():
             self.points = np.flip(self.points, axis=0)
             self.edges = self._edges()
 
     def _edges(self):
+        """ Compute the set of edges from the set of points."""
         edges = []
         for i in range(len(self.points)):
             edges.append(np.array([self.points[i], self.points[(i+1) % len(self.points)]]))
         return np.array(edges)
 
     def edge_angles(self):
-        """Returns edge vectors in order of angle from y axis, starting with the closest to 0."""
+        """Returns edge vectors in order of angle from y axis, and the index of the smallest angle."""
         edges = self.edges
         angles = []
         pos_y = np.array([0, 1])
@@ -138,7 +140,6 @@ class Polygons(object):
     def make_random(bounds, num_vertices, num_initial_partitions=None, return_num_made=False):
         """Makes a random disjoint set of convex polygons within the bounds
         and with num_vertices vertices in total."""
-        # print("Generating Random polygons")
         free_space = [np.array([[bounds[0], bounds[1]], [bounds[2], bounds[3]]])]
         # Randomly split a few times to start 
         if num_initial_partitions is None:
@@ -174,7 +175,6 @@ class Polygons(object):
             polygons.append(polygon)
             vertices_generated += len(polygon)
 
-        # print("Finished with: {} Polygons".format(len(polygons)))
         if not return_num_made:
             return polygons
         else:
@@ -183,6 +183,7 @@ class Polygons(object):
 
     def merge_intersecting(self):
         """Merge intersecting polygons into a single polygon."""
+        # TODO
         pass
 
     def random_edge_sampler(self):
@@ -215,7 +216,6 @@ class Polygons(object):
                 # Check each point to see if they lie on the edge
                 for i, point in enumerate(points):
                     contained[i] = contained[i] or point_on_edge(edge, point)
-            # print("[contained] {}".format(contained))
 
             if contained.all():
                 return True

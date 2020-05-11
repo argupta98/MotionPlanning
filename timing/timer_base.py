@@ -69,27 +69,26 @@ class Timer(object):
         plot_complexity = self.plot_complexity(complexity)
         complexity_sorted_indices = np.argsort(plot_complexity)
         complexity = complexity[complexity_sorted_indices]
+        plot_complexity = plot_complexity[complexity_sorted_indices]
         complexity_fn = self.complex_fn(complexity)
 
         case_avgs = np.array(avgs)[complexity_sorted_indices]
-        print("complexity fn shape: {}".format(complexity_fn.shape))
-        print("case avgs: {}".format(case_avgs.shape))
-        print("plot complexity shape: {}".format(plot_complexity.shape))
 
         fit_coeffs_avg = np.polyfit(complexity_fn, case_avgs, 1)
         fit_avg = np.poly1d(fit_coeffs_avg)
         plt.scatter(plot_complexity, case_avgs, color='green', label='mean runtime raw')
         plt.plot(plot_complexity, fit_avg(complexity_fn), '--', color='green', label='{} fit to mean'.format(self.complexity_name))
 
-
+        """
         case_max = np.array(maxes)[complexity_sorted_indices]
         fit_coeffs_max = np.polyfit(complexity_fn, case_max, 1)
         fit_max = np.poly1d(fit_coeffs_max)
         # plt.scatter(complexity, case_medians, color='blue', label='median runtime')
         plt.scatter(plot_complexity, case_max, color='red', label='worst-case runtime raw')
         plt.plot(plot_complexity, fit_max(complexity_fn), '--', color='red', label='{} fit to worst-case'.format(self.complexity_name))
+        """
         
-        plt.ylim(0, case_max.max())
+        plt.ylim(0, case_avgs.max())
         plt.title("{} Runtime as a Function of Complexity".format(self.fn_name))
         plt.xlabel("Example Complexity")
         plt.ylabel("Runtime")

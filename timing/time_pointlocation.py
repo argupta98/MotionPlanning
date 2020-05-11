@@ -8,7 +8,7 @@ from src.structures import Polygons
 # Decomposition Cases
 class DecompositionCases(Timer):
     # Specific cases  
-    CASES = [[3 * i, [10, 10, 790 * i/10.0, 790 * i / 10.0]] for i in range(1, 100, 10)]
+    CASES = [[3 * i, [10, 10, 790 * i/10.0, 790 * i / 10.0]] for i in range(1, 500, 10)]
 
     def __init__(self):
         super(DecompositionCases, self).__init__(trapezoid_decomposition_pl)
