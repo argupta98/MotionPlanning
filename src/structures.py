@@ -135,13 +135,15 @@ class Polygons(object):
 
 
     @staticmethod
-    def make_random(bounds, num_vertices, return_num_made=False):
+    def make_random(bounds, num_vertices, num_initial_partitions=None, return_num_made=False):
         """Makes a random disjoint set of convex polygons within the bounds
         and with num_vertices vertices in total."""
         # print("Generating Random polygons")
         free_space = [np.array([[bounds[0], bounds[1]], [bounds[2], bounds[3]]])]
         # Randomly split a few times to start 
-        for _ in range(int(0.3 * num_vertices)):
+        if num_initial_partitions is None:
+            num_initial_partitions = int(0.3 * num_vertices)
+        for _ in range(num_initial_partitions):
             Polygons.split_freespace(free_space)
 
         polygons = []

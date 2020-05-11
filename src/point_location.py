@@ -287,7 +287,7 @@ class Trapezoids(object):
         if x in self.by_left_x:
             # print("[Right-Adjacent-To] x: {} values: {}".format(x, self.by_left_x[x]))
             return self.by_left_x[x]
-        return []
+        return {}
 
     def right_adjacent(self, index):
         """Returns all trapezoids that share the right edge with the current 
@@ -517,6 +517,7 @@ class PointLocator(object):
         p_l = edge[0]
         p_r = edge[1]
 
+        is_intersecting = False
         self.edge_history.append(edge)
 
         # 1) Find the trapezoids that are intersected by the segment
@@ -542,8 +543,9 @@ class PointLocator(object):
                 if self.trapezoids[intersected_traps[-1]].includes_point_loose(p_r):
                     last_includes_point =  True
                     break
+            is_intersecting = not last_includes_point
             # print("Intersected: {}".format(intersected_traps))
-            assert(last_includes_point), "Last point Not included in last Trapezoid!! Are there intersecting Polygons?"
+            # assert(last_includes_point), "Last point Not included in last Trapezoid!! Are there intersecting Polygons?"
             # intersected_traps.append(right_trap)
 
 
@@ -586,6 +588,7 @@ class PointLocator(object):
                     p.set_value(new_node)
 
         self.trapezoids.clean()
+        return is_intersecting
 
 
     def pop_leaf(self, idx):
@@ -610,3 +613,5 @@ class PointLocator(object):
             elif curr_node is None:
                 raise ValueError("[PointLocator] No trapezoid in that Area!")
                 return None
+            elif isinstance(curr_node, str):
+                raise ValueError("[PointLocator] Obstacles out of bounds!")
