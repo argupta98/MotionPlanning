@@ -9,6 +9,7 @@ $ python motion_planning.py
 
 This will launch a GUI interface which will guide you through picking (or randomly generating) obstacles and planning a path. The interface additionally has options to do a step-by-step walkthrough for adding individual lines to the trapezoid decomposition.
 
+![GUI Gif](images/motion_planning.gif){:height="20%" width="20%"}
 
 We run asymptotic analysis on the code performance. We get the expected O(NlogN) runtime for building the trapezoid decomposition and point location datastructure:
 
