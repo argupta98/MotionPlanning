@@ -95,10 +95,10 @@ class Polygons(object):
 
         # Fill with the remaining vertices
         vertices = np.random.rand(max_num_vertices, 2)
-        vertices[:, 0] *= bounds[1, 0] - bounds[0, 0] - 4
-        vertices[:, 0] += bounds[0, 0] + 2 
-        vertices[:, 1] *= bounds[1, 1] - bounds[0, 1] - 4
-        vertices[:, 1] += bounds[0, 1] + 2
+        vertices[:, 0] *= bounds[1, 0] - bounds[0, 0] - 10
+        vertices[:, 0] += bounds[0, 0] + 5 
+        vertices[:, 1] *= bounds[1, 1] - bounds[0, 1] - 10
+        vertices[:, 1] += bounds[0, 1] + 5
 
         # Generate convex hull
         hull = ConvexHull(vertices).vertices
@@ -160,7 +160,7 @@ class Polygons(object):
                 fill_idx = int(np.random.rand() * (len(free_space) - 1))
                 box = free_space[fill_idx]
                 free_space.pop(fill_idx)
-                if box[1, 0] - box[0, 0] > 10 and box[1, 1] - box[0, 1] > 10:
+                if box[1, 0] - box[0, 0] > 20 and box[1, 1] - box[0, 1] > 20:
                     found_freespace = True
             
             # In case all free space is taken up

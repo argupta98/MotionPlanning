@@ -32,4 +32,27 @@ class TestCSpace(unittest.TestCase):
         expected = np.roll(expected, offset)
         np.testing.assert_equal(output, expected)
     
+    def test_random(self):
+        # check a bunch of random examples
+        for _ in range(1000):
+            m_p_n = 100
+            m = int(np.random.rand() * (m_p_n - 6)) + 3
+            n = m_p_n - m
+            bounds = [10, 10, 790, 790]
+            bounds = np.array([[bounds[0], bounds[1]], [bounds[2], bounds[3]]])
+            polygon_vehicle = Polygons.make_convex(m, bounds)
+            polygon_obstacle = Polygons.make_convex(n, bounds)
+
+            #  true_complexity = len(polygon_vehicle) + len(polygon_obstacle)
+            output = minkowski_sum_fast(polygon_obstacle, polygon_vehicle)
+            expected = minkowski_sum(polygon_obstacle, polygon_vehicle)
+            """
+            print("output: \n{}".format(output))
+            print("expected: \n{}".format(expected))
+            for x in expected:
+                self.assertTrue(x in output, "{} not in output".format(x))
+            """
+            
+
+    
 

@@ -79,7 +79,7 @@ class GUI(object):
         self.window.mainloop()
     
     def on_random(self):
-        self.obstacle_polygons = Polygons.make_random([10, 10, 790, 790], 100)
+        self.obstacle_polygons = Polygons.make_random([20, 20, 780, 780], 30)
 
         for polygon in self.obstacle_polygons:
             self.canvas.create_polygon(*polygon.flatten(), tag="obstacle")
@@ -235,9 +235,12 @@ class GUI(object):
     def on_plan_path(self):
         start = np.array(self.vehicle_polygon).mean(axis=0)
         graph = Graph(self.point_locator, 10)
-        trapezoid_list = graph.search(start, self.endpoint)
-        for trap in trapezoid_list:
-            self.canvas.create_polygon(*trap.flatten(), tag="path_trap", fill="green", outline="black")
+        point_list = graph.search(start, self.endpoint)
+        print("path length: {}".format(len(point_list)))
+        last_point = point_list[0]
+        for point in point_list[1:]:
+            self.canvas.create_line(last_point[0], last_point[1], point[0], point[1], fill="green", tag="path", width=3.0)
+            last_point = point
     
     def on_obstacle_start_click(self):
         self.building_vehicle = False

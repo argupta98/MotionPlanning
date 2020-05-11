@@ -95,10 +95,15 @@ class Graph(object):
         path.reverse()
 
         # Get the corresponding trapezoids for visualization
-        for i, trap_idx in enumerate(path):
-            path[i] = self.traps[trap_idx].raw()
+        last_trap_idx = path[0]
+        line_path = [start]
+        for trap_idx in path[1:]:
+            line_path.append(self.interfaces[last_trap_idx][trap_idx].center)
+            last_trap_idx = trap_idx
+            # path[i] = self.traps[trap_idx].raw()
+        line_path.append(end)
 
         print("[Graph] search complete.")
-        return path
+        return line_path
         
 

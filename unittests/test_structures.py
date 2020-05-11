@@ -25,7 +25,6 @@ class TestPolygonCounter(unittest.TestCase):
         vehicle.counterclockwise()
         self.assertTrue(vehicle.is_counterclockwise())
         angles, _ = vehicle.edge_angles()
-        # print(angles)
         
 
     def test_specific_2(self):

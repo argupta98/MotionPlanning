@@ -66,17 +66,23 @@ class Timer(object):
 
 
         complexity = np.array(complexity_bins.keys())
+        complexity_sorted_indices = np.argsort(complexity)
+        complexity = complexity[complexity_sorted_indices]
         plot_complexity = self.plot_complexity(complexity)
         complexity_fn = self.complex_fn(complexity)
 
-        case_avgs = np.array(avgs)
+        case_avgs = np.array(avgs)[complexity_sorted_indices]
         fit_coeffs_avg = np.polyfit(complexity_fn, case_avgs, 1)
+        print(fit_coeffs_avg)
+        print("complexity fn shape: {}".format(complexity_fn.shape))
+        print("case avgs: {}".format(case_avgs.shape))
+        print("plot complexity shape: {}".format(plot_complexity.shape))
         fit_avg = np.poly1d(fit_coeffs_avg)
         plt.scatter(plot_complexity, case_avgs, color='green', label='mean runtime raw')
         plt.plot(plot_complexity, fit_avg(complexity_fn), '--', color='green', label='{} fit to mean'.format(self.complexity_name))
 
 
-        case_max = np.array(maxes)
+        case_max = np.array(maxes)[complexity_sorted_indices]
         fit_coeffs_max = np.polyfit(complexity_fn, case_max, 1)
         fit_max = np.poly1d(fit_coeffs_max)
         # plt.scatter(complexity, case_medians, color='blue', label='median runtime')

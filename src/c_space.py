@@ -60,6 +60,7 @@ def trapezoid_decomposition_pl(polygons, bounds):
     """ Runs polygon decomposition while maintaining the 
         point location datastructure for O(nlogn) runtime."""
     polygons = Polygons(polygons)
+    # print(bounds)
     point_locator = PointLocator(bounds)
     for edge in polygons.random_edge_sampler():
         point_locator.add_line(edge)
@@ -124,8 +125,8 @@ def minkowski_sum_fast(obstacle, vehicle):
     # get the proper edge ordering based on the 
     vehicle_edge_angles, v_start = vehicle.edge_angles()
     obstacle_edge_angles, o_start = obstacle.edge_angles()
-    print("vehicle edge angles: {}".format(vehicle_edge_angles))
-    print("obstacle edge angles: {}".format(obstacle_edge_angles))
+    # print("vehicle edge angles: {}".format(vehicle_edge_angles))
+    # print("obstacle edge angles: {}".format(obstacle_edge_angles))
 
     # Start with obstacle points to get the right location
     output_polygon = [obstacle.edges[o_start, 0], obstacle.edges[o_start, 1]]
@@ -186,8 +187,8 @@ def minkowski_sum_fast(obstacle, vehicle):
             translation.append(tuple(point_to_centroid + output_polygon[-1]))
         output_polygon.append(output_polygon[-1] + edge_vector)
 
-    assert(v_idx == len(vehicle.edges)), "vehicle: {} obstacle: {}".format(vehicle, obstacle)
-    assert(o_idx == len(obstacle.edges)), "vehicle: {} obstacle: {}".format(vehicle, obstacle)
+    # assert(v_idx == len(vehicle.edges)), "vehicle: {} obstacle: {}".format(vehicle, obstacle)
+    # assert(o_idx == len(obstacle.edges)), "vehicle: {} obstacle: {}".format(vehicle, obstacle)
 
     # Clean up 
     # remove points in middle of lines

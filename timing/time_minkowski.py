@@ -9,10 +9,10 @@ from src.structures import Polygons
 # Decomposition Cases
 class MinkowskiCases(Timer):
     # Specific cases  
-    CASES = [([3 * i, [10, 10, 790 * i/10.0, 790 * i / 10.0]]) for i in range(3, 10000, 100)]
+    CASES = [([3 * i, [10, 10, 790 * i * 10.0, 790 * i * 10.0]]) for i in range(3, 10000, 100)]
 
     def __init__(self):
-        super(MinkowskiCases, self).__init__(minkowski_sum_fast)
+        super(MinkowskiCases, self).__init__(minkowski_sum)
         self.complexity_name = "O(m + n)"
         self.fn_name = "Minkowski Sum"
     

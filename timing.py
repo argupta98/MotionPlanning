@@ -1,4 +1,5 @@
 from timing.time_pointlocation import DecompositionCases
+from timing.time_query import QueryCases
 from timing.time_minkowski import MinkowskiCases
 import argparse
 parser = argparse.ArgumentParser()
@@ -11,7 +12,7 @@ if __name__ == "__main__":
     if args.time_trap_building:
         timer = DecompositionCases()
     elif args.time_trap_querying:
-        timer = None
+        timer = QueryCases()
     elif args.time_minkowski:
         timer = MinkowskiCases()
     timer.run()
