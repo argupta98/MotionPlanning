@@ -11,10 +11,15 @@ class MinkowskiCases(Timer):
     # Specific cases  
     CASES = [([3 * i, [10, 10, 790 * i * 10.0, 790 * i * 10.0]]) for i in range(3, 10000, 100)]
 
-    def __init__(self):
-        super(MinkowskiCases, self).__init__(minkowski_sum_fast)
+    def __init__(self, use_slow=False):
+        if use_slow:
+            super(MinkowskiCases, self).__init__(minkowski_sum)
+            self.fn_name = "Minkowski Sum O(mn)"
+        else:
+            super(MinkowskiCases, self).__init__(minkowski_sum_fast)
+            self.fn_name = "Minkowski Sum"
+        self.slow = True
         self.complexity_name = "O(m + n)"
-        self.fn_name = "Minkowski Sum"
     
     def make_input(self, case):
         # Pick a random partition to split into m, n

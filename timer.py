@@ -17,5 +17,7 @@ if __name__ == "__main__":
         timer = QueryCases()
     elif args.time_minkowski:
         timer = MinkowskiCases()
+    elif args.time_minkowski_slow:
+        timer = MinkowskiCases(use_slow=True)
     timer.run()
 
